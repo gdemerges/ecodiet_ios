@@ -45,17 +45,15 @@ struct ContentView: View {
                     Text("Select an item")
                 }
             } else {
-                VStack(spacing: 16) {
-                    LoginView(isAuthenticated: $isAuthenticated)
-                    Button("S’inscrire") { isPresentingSignup = true }
-                }
-                .sheet(isPresented: $isPresentingSignup) {
-                    SignupFlowView { email, password, prefs in
-                        // TODO: Persister l’utilisateur si nécessaire
-                        isAuthenticated = true
-                        // Vous pouvez stocker prefs dans un modèle SwiftData plus tard
+                LoginView(isAuthenticated: $isAuthenticated, onSignup: { isPresentingSignup = true })
+                    .frame(maxHeight: 500, alignment: .top)
+                    .padding(.top, 40)
+                    .sheet(isPresented: $isPresentingSignup) {
+                        SignupFlowView { email, password, prefs in
+                            // TODO: Persister l’utilisateur si nécessaire
+                            isAuthenticated = true
+                        }
                     }
-                }
             }
         }
     }

@@ -6,6 +6,7 @@ struct LoginView: View {
     @State private var password: String = ""
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
+    var onSignup: () -> Void = {}
 
     var body: some View {
         VStack(spacing: 24) {
@@ -50,6 +51,17 @@ struct LoginView: View {
             .buttonStyle(.borderedProminent)
             .disabled(isLoading || username.isEmpty || password.isEmpty)
 
+            Button {
+                onSignup()
+            } label: {
+                Text("S’inscrire")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 5)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .tint(.accentColor)
+
             Spacer()
         }
         .padding(24)
@@ -59,10 +71,8 @@ struct LoginView: View {
         errorMessage = nil
         guard !username.isEmpty, !password.isEmpty else { return }
         isLoading = true
-        // Simulate async auth
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             isLoading = false
-            // Demo: accept any non-empty credentials
             isAuthenticated = true
         }
     }
@@ -70,12 +80,11 @@ struct LoginView: View {
 
 #Preview {
     StatefulPreviewWrapper(false) { isAuth in
-        LoginView(isAuthenticated: isAuth)
+        LoginView(isAuthenticated: isAuth, onSignup: {})
             .padding()
     }
 }
 
-// Helper to preview bindings easily
 struct StatefulPreviewWrapper<Value, Content: View>: View {
     @State private var value: Value
     private let content: (Binding<Value>) -> Content
@@ -87,3 +96,4 @@ struct StatefulPreviewWrapper<Value, Content: View>: View {
 
     var body: some View { content($value) }
 }
+
