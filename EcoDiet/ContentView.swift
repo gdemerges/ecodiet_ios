@@ -9,33 +9,54 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @State private var isAuthenticated = false
+    @State private var isPresentingSignup = false
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        Group {
+            if isAuthenticated {
+                NavigationSplitView {
+                    List {
+                        ForEach(items) { item in
+                            NavigationLink {
+                                Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                            } label: {
+                                Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                            }
+                        }
+                        .onDelete(perform: deleteItems)
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            EditButton()
+                        }
+                        ToolbarItem {
+                            Button(action: addItem) {
+                                Label("Add Item", systemImage: "plus")
+                            }
+                        }
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("Déconnexion") { isAuthenticated = false }
+                        }
+                    }
+                } detail: {
+                    Text("Select an item")
+                }
+            } else {
+                VStack(spacing: 16) {
+                    LoginView(isAuthenticated: $isAuthenticated)
+                    Button("S’inscrire") { isPresentingSignup = true }
+                }
+                .sheet(isPresented: $isPresentingSignup) {
+                    SignupFlowView { email, password, prefs in
+                        // TODO: Persister l’utilisateur si nécessaire
+                        isAuthenticated = true
+                        // Vous pouvez stocker prefs dans un modèle SwiftData plus tard
                     }
                 }
-                .onDelete(perform: deleteItems)
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
         }
     }
 
