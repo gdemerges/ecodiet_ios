@@ -15,45 +15,48 @@ struct ContentView: View {
     @Query private var items: [Item]
 
     var body: some View {
-        Group {
-            if isAuthenticated {
-                NavigationSplitView {
-                    List {
-                        ForEach(items) { item in
-                            NavigationLink {
-                                Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                            } label: {
-                                Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        ZStack {
+            Group {
+                if isAuthenticated {
+                    NavigationSplitView {
+                        List {
+                            ForEach(items) { item in
+                                NavigationLink {
+                                    Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                                } label: {
+                                    Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                                }
+                            }
+                            .onDelete(perform: deleteItems)
+                        }
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                EditButton()
+                            }
+                            ToolbarItem {
+                                Button(action: addItem) {
+                                    Label("Add Item", systemImage: "plus")
+                                }
+                            }
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Déconnexion") { isAuthenticated = false }
                             }
                         }
-                        .onDelete(perform: deleteItems)
+                        .scrollContentBackground(.hidden) // Hide default list background to let gradient show through
+                        .background(Color.clear)
+                    } detail: {
+                        Text("Select an item")
                     }
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            EditButton()
-                        }
-                        ToolbarItem {
-                            Button(action: addItem) {
-                                Label("Add Item", systemImage: "plus")
+                } else {
+                    LoginView(isAuthenticated: $isAuthenticated, onSignup: { isPresentingSignup = true })
+                        .sheet(isPresented: $isPresentingSignup) {
+                            SignupFlowView { email, password, prefs in
+                                // TODO: Persister l’utilisateur si nécessaire
+                                isAuthenticated = true
                             }
+                            .presentationBackground(.clear)
                         }
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button("Déconnexion") { isAuthenticated = false }
-                        }
-                    }
-                } detail: {
-                    Text("Select an item")
                 }
-            } else {
-                LoginView(isAuthenticated: $isAuthenticated, onSignup: { isPresentingSignup = true })
-                    .frame(maxHeight: 500, alignment: .top)
-                    .padding(.top, 40)
-                    .sheet(isPresented: $isPresentingSignup) {
-                        SignupFlowView { email, password, prefs in
-                            // TODO: Persister l’utilisateur si nécessaire
-                            isAuthenticated = true
-                        }
-                    }
             }
         }
     }
