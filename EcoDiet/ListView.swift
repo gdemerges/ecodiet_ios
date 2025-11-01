@@ -3,55 +3,60 @@ import SwiftUI
 struct ListView: View {
     @State private var searchText: String = ""
 
-    let items: [String] = [
-        "Bowl veggie",
-        "Salade césar",
-        "Pâtes complètes",
-        "Soupe de saison",
-        "Riz aux légumes",
-        "Quiche aux épinards",
-        "Poulet rôti",
-        "Saumon grillé",
-        "Curry de pois chiches",
-        "Tacos végétariens"
+    let recipes: [Recipe] = [
+        Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf"),
+        Recipe(title: "Salade césar", subtitle: "Poulet, parmesan", imageName: "fork.knife"),
+        Recipe(title: "Pâtes complètes", subtitle: "Tomates & basilic", imageName: "takeoutbag.and.cup.and.straw"),
+        Recipe(title: "Soupe de saison", subtitle: "Potiron & coco", imageName: "cup.and.saucer"),
+        Recipe(title: "Riz aux légumes", subtitle: "Coloré et nutritif", imageName: "carrot"),
+        Recipe(title: "Quiche aux épinards", subtitle: "Pâte feuilletée maison", imageName: "circle.hexagongrid"),
+        Recipe(title: "Poulet rôti", subtitle: "Herbes de Provence", imageName: "bird"),
+        Recipe(title: "Saumon grillé", subtitle: "Citron et aneth", imageName: "fish"),
+        Recipe(title: "Curry de pois chiches", subtitle: "Épices douces", imageName: "flame"),
+        Recipe(title: "Tacos végétariens", subtitle: "Haricots noirs", imageName: "tortoise")
     ]
 
-    var filteredItems: [String] {
-        if searchText.isEmpty { return items }
-        return items.filter { $0.localizedCaseInsensitiveContains(searchText) }
+    var filteredRecipes: [Recipe] {
+        if searchText.isEmpty { return recipes }
+        return recipes.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
 
     var body: some View {
         List {
-            ForEach(filteredItems, id: \.self) { item in
-                HStack(spacing: 12) {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 48, height: 48)
-                        .overlay(
-                            Image(systemName: "fork.knife.circle")
-                                .font(.title3)
-                                .foregroundStyle(.tint)
-                        )
+            ForEach(filteredRecipes) { recipe in
+                NavigationLink {
+                    RecipeDetailView(recipe: recipe)
+                } label: {
+                    HStack(spacing: 12) {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Image(systemName: recipe.imageName)
+                                    .font(.title3)
+                                    .foregroundStyle(.tint)
+                            )
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item)
-                            .font(.headline)
-                        Text("Recette équilibrée et savoureuse")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(recipe.title)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text(recipe.subtitle)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
                     }
-                    Spacer()
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(.thinMaterial)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(.white.opacity(0.15), lineWidth: 1)
+                    )
                 }
-                .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.thinMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(.white.opacity(0.15), lineWidth: 1)
-                )
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
             }
