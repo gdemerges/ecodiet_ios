@@ -1,7 +1,8 @@
 import SwiftUI
+import SwiftData
 
 struct FoldersView: View {
-    let dataManager: RecipeDataManager
+    let dataManager: SwiftDataManager
     @State private var showingAddFolder = false
     @State private var newFolderTitle = ""
     @State private var selectedIcon = "folder"
@@ -93,7 +94,6 @@ struct FoldersView: View {
     private func addFolder() {
         let newFolder = RecipeFolder(
             title: newFolderTitle,
-            recipes: [],
             imageName: selectedIcon
         )
         dataManager.addFolder(newFolder)
@@ -102,7 +102,12 @@ struct FoldersView: View {
     }
     
     private func deleteFolder(at offsets: IndexSet) {
-        dataManager.deleteFolder(at: offsets)
+        for index in offsets {
+            if index < dataManager.folders.count {
+                let folder = dataManager.folders[index]
+                dataManager.deleteFolder(folder)
+            }
+        }
     }
     
     private func resetForm() {
@@ -112,7 +117,10 @@ struct FoldersView: View {
 }
 
 #Preview {
-    let sampleDataManager = RecipeDataManager()
-    
-    return FoldersView(dataManager: sampleDataManager)
+    let schema = Schema([Recipe.self, RecipeFolder.self, UserProfile.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+    let context = ModelContext(container)
+    let manager = SwiftDataManager(modelContext: context)
+    return FoldersView(dataManager: manager)
 }

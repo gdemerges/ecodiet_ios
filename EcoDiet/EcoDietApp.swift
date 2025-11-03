@@ -12,7 +12,9 @@ import SwiftData
 struct EcoDietApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Recipe.self,
+            RecipeFolder.self,
+            UserProfile.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

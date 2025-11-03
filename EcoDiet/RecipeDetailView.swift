@@ -2,8 +2,8 @@ import SwiftUI
 
 struct RecipeDetailView: View {
     let recipe: Recipe
+    let profileManager: UserProfileManager
     @Environment(\.dismiss) private var dismiss
-    @State private var profileManager = UserProfileManager()
     
     var body: some View {
         ZStack {
@@ -318,6 +318,6 @@ struct InfoCard: View {
 
 #Preview {
     NavigationStack {
-        RecipeDetailView(recipe: Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf"))
+        RecipeDetailView(recipe: Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf"), profileManager: UserProfileManager())
     }
 }

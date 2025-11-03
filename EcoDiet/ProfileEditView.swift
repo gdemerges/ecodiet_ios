@@ -268,11 +268,12 @@ struct ProfileEditView: View {
     // MARK: - Helper Methods
     
     private func loadCurrentProfile() {
-        name = profileManager.userProfile.name
-        email = profileManager.userProfile.email
-        selectedCookingLevel = profileManager.userProfile.cookingLevel
-        dietaryPreferences = profileManager.userProfile.dietaryPreferences
-        allergies = profileManager.userProfile.allergies
+        guard let profile = profileManager.userProfile else { return }
+        name = profile.name
+        email = profile.email
+        selectedCookingLevel = profile.cookingLevel
+        dietaryPreferences = profile.dietaryPreferences
+        allergies = profile.allergies
     }
     
     private func saveProfile() {

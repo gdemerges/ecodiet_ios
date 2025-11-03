@@ -11,52 +11,70 @@ import SwiftData
 struct ContentView: View {
     @State private var isAuthenticated = false
     @State private var isPresentingSignup = false
+    @State private var profileManager = UserProfileManager()
+    @State private var dataManager: SwiftDataManager?
+    
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
 
     var body: some View {
         ZStack {
             Group {
-                if isAuthenticated {
-                    NavigationStack {
-                        HomeView()
-                            .toolbar {
-                                ToolbarItem(placement: .topBarLeading) {
-                                    Button("Déconnexion") { isAuthenticated = false }
+                if let _ = dataManager {
+                    if isAuthenticated {
+                        NavigationStack {
+                            HomeView(dataManager: dataManager!, profileManager: profileManager)
+                                .toolbar {
+                                    ToolbarItem(placement: .topBarLeading) {
+                                        Button("Déconnexion") {
+                                            isAuthenticated = false
+                                            // Les données restent persistantes avec SwiftData
+                                        }
+                                    }
                                 }
-                            }
+                        }
+                    } else {
+                        LoginView(
+                            isAuthenticated: $isAuthenticated,
+                            onSignup: { isPresentingSignup = true }
+                        )
+                        .sheet(isPresented: $isPresentingSignup) {
+                            SignupFlowView(onComplete: handleSignupCompletion)
+                                .presentationBackground(.clear)
+                        }
                     }
                 } else {
-                    LoginView(isAuthenticated: $isAuthenticated, onSignup: { isPresentingSignup = true })
-                        .sheet(isPresented: $isPresentingSignup) {
-                            SignupFlowView { email, password, prefs in
-                                // TODO: Persister l’utilisateur si nécessaire
-                                isAuthenticated = true
-                            }
-                            .presentationBackground(.clear)
-                        }
+                    ProgressView("Chargement...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemBackground))
                 }
             }
         }
+        .onAppear {
+            setupDataManager()
+        }
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+    
+    private func setupDataManager() {
+        if dataManager == nil {
+            let swiftDataManager = SwiftDataManager(modelContext: modelContext)
+            dataManager = swiftDataManager
+            profileManager.configure(with: swiftDataManager)
         }
     }
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+    private func handleSignupCompletion(email: String, password: String, profile: UserProfile) {
+        profileManager.createProfileFromSignup(
+            email: email,
+            password: password,
+            profile: profile
+        )
+        isPresentingSignup = false
+        isAuthenticated = true
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: [Recipe.self, RecipeFolder.self, UserProfile.self], inMemory: true)
 }
+

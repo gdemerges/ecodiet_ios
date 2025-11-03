@@ -8,20 +8,25 @@ struct UserPreferences {
 }
 
 struct SignupFlowView: View {
-    enum Step { case credentials, preferences }
+    enum Step { case credentials, profile, preferences }
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var step: Step = .credentials
     @State private var email: String = ""
     @State private var password: String = ""
+    @State private var firstName: String = ""
 
     @State private var isVegetarian: Bool = false
     @State private var isVegan: Bool = false
     @State private var isGlutenFree: Bool = false
     @State private var isLactoseFree: Bool = false
 
-    var onComplete: (String, String, UserPreferences) -> Void
+    @State private var allergies: [String] = []
+    @State private var newAllergy: String = ""
+    @State private var cookingLevel: CookingLevel = .beginner
+
+    var onComplete: (String, String, UserProfile) -> Void
 
     private let primaryGreen = Color(hue: 0.33, saturation: 0.65, brightness: 0.55)
     private let leafGreen = Color(hue: 0.33, saturation: 0.55, brightness: 0.72)
@@ -37,15 +42,17 @@ struct SignupFlowView: View {
                     switch step {
                     case .credentials:
                         credentialsView
+                    case .profile:
+                        profileStepView
                     case .preferences:
                         preferencesView
                     }
                 }
-                .navigationTitle(step == .credentials ? "Inscription" : "Préférences alimentaires")
+                .navigationTitle(navigationTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
-                        Text(step == .credentials ? "Inscription" : "Préférences alimentaires")
+                        Text(navigationTitle)
                             .font(.title2.weight(.semibold))
                             .kerning(0.5)
                             .foregroundStyle(primaryGreen)
@@ -94,7 +101,7 @@ struct SignupFlowView: View {
             .shadow(color: .black.opacity(0.06), radius: 20, x: 0, y: 12)
 
             Button {
-                withAnimation { step = .preferences }
+                withAnimation { step = .profile }
             } label: {
                 Text("Continuer")
                     .frame(maxWidth: .infinity)
@@ -107,6 +114,94 @@ struct SignupFlowView: View {
             .disabled(!isCredentialsValid)
         }
         .padding()
+    }
+
+    private var profileStepView: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Informations personnelles")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 10) {
+                        Image(systemName: "person.fill").foregroundStyle(leafGreen)
+                        TextField("Prénom", text: $firstName)
+                            .textContentType(.givenName)
+                            .textInputAutocapitalization(.words)
+                    }
+                    .padding(14)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(leafGreen.opacity(0.15), lineWidth: 1))
+                }
+                .padding(18)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.2), lineWidth: 1))
+                .shadow(color: .black.opacity(0.06), radius: 20, x: 0, y: 12)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Niveau de cuisine")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+
+                    VStack(spacing: 8) {
+                        ForEach(CookingLevel.allCases, id: \.self) { level in
+                            cookingLevelRow(level: level)
+                        }
+                    }
+                }
+                .padding(18)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.2), lineWidth: 1))
+                .shadow(color: .black.opacity(0.06), radius: 20, x: 0, y: 12)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Allergies alimentaires")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        TextField("Ajouter une allergie", text: $newAllergy)
+                        Button("Ajouter") {
+                            addAllergy()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(leafGreen)
+                        .disabled(newAllergy.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    .padding(14)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(leafGreen.opacity(0.15), lineWidth: 1))
+
+                    if !allergies.isEmpty {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120))], spacing: 8) {
+                            ForEach(Array(allergies.enumerated()), id: \.offset) { index, allergy in
+                                allergyChip(allergy: allergy, index: index)
+                            }
+                        }
+                    }
+                }
+                .padding(18)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.2), lineWidth: 1))
+                .shadow(color: .black.opacity(0.06), radius: 20, x: 0, y: 12)
+
+                Button {
+                    withAnimation { step = .preferences }
+                } label: {
+                    Text("Continuer")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .bold()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(primaryGreen)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .disabled(!isProfileValid)
+            }
+            .padding()
+        }
     }
 
     private var preferencesView: some View {
@@ -129,13 +224,25 @@ struct SignupFlowView: View {
 
                 VStack {
                     Button {
-                        let prefs = UserPreferences(
-                            isVegetarian: isVegetarian,
-                            isVegan: isVegan,
-                            isGlutenFree: isGlutenFree,
-                            isLactoseFree: isLactoseFree
+                        // Convert UserPreferences to dietary preferences array
+                        var dietaryPreferences: [String] = []
+                        if isVegetarian { dietaryPreferences.append("Végétarien") }
+                        if isVegan { dietaryPreferences.append("Végan") }
+                        if isGlutenFree { dietaryPreferences.append("Sans gluten") }
+                        if isLactoseFree { dietaryPreferences.append("Sans lactose") }
+                        
+                        let profile = UserProfile(
+                            name: firstName,
+                            email: email
                         )
-                        onComplete(email, password, prefs)
+                        
+                        // Update the profile with the collected data
+                        var updatedProfile = profile
+                        updatedProfile.dietaryPreferences = dietaryPreferences
+                        updatedProfile.allergies = allergies
+                        updatedProfile.cookingLevel = cookingLevel
+                        
+                        onComplete(email, password, updatedProfile)
                         dismiss()
                     } label: {
                         Text("Créer le compte")
@@ -183,6 +290,72 @@ struct SignupFlowView: View {
         .buttonStyle(.plain)
     }
 
+    @ViewBuilder
+    private func cookingLevelRow(level: CookingLevel) -> some View {
+        let isSelected = cookingLevel == level
+        Button(action: { cookingLevel = level }) {
+            HStack {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? primaryGreen : .secondary)
+                    .font(.title3)
+                Text(level.rawValue)
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+            .padding(12)
+            .background(isSelected ? primaryGreen.opacity(0.1) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isSelected ? primaryGreen.opacity(0.3) : Color.clear, lineWidth: 1)
+            )
+            .animation(.easeInOut(duration: 0.15), value: isSelected)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func allergyChip(allergy: String, index: Int) -> some View {
+        HStack(spacing: 6) {
+            Text(allergy)
+                .font(.caption)
+                .lineLimit(1)
+            Button(action: { removeAllergy(at: index) }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().stroke(.secondary.opacity(0.3), lineWidth: 0.5))
+    }
+
+    private func addAllergy() {
+        let trimmedAllergy = newAllergy.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedAllergy.isEmpty && !allergies.contains(trimmedAllergy) {
+            allergies.append(trimmedAllergy)
+            newAllergy = ""
+        }
+    }
+
+    private func removeAllergy(at index: Int) {
+        allergies.remove(at: index)
+    }
+
+    private var navigationTitle: String {
+        switch step {
+        case .credentials: return "Inscription"
+        case .profile: return "Profil"
+        case .preferences: return "Préférences alimentaires"
+        }
+    }
+
+    private var isProfileValid: Bool {
+        !firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     private var isCredentialsValid: Bool {
         !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         email.contains("@") &&
@@ -191,7 +364,9 @@ struct SignupFlowView: View {
 }
 
 #Preview {
-    SignupFlowView { email, password, prefs in
-        print(email, password, prefs)
+    SignupFlowView { email, password, profile in
+        print("Email: \(email)")
+        print("Password: \(password)")
+        print("Profile: \(profile)")
     }
 }

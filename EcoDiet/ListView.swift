@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ListView: View {
+    let profileManager: UserProfileManager
     @State private var searchText: String = ""
 
     let recipes: [Recipe] = [
@@ -24,41 +25,9 @@ struct ListView: View {
     var body: some View {
         List {
             ForEach(filteredRecipes) { recipe in
-                NavigationLink {
-                    RecipeDetailView(recipe: recipe)
-                } label: {
-                    HStack(spacing: 12) {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(.ultraThinMaterial)
-                            .frame(width: 48, height: 48)
-                            .overlay(
-                                Image(systemName: recipe.imageName)
-                                    .font(.title3)
-                                    .foregroundStyle(.tint)
-                            )
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(recipe.title)
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            Text(recipe.subtitle)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                    }
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(.thinMaterial)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(.white.opacity(0.15), lineWidth: 1)
-                    )
-                }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+                recipeRow(for: recipe)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
         }
         .listStyle(.plain)
@@ -67,10 +36,54 @@ struct ListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .background(AuthBackground().ignoresSafeArea())
     }
+    
+    @ViewBuilder
+    private func recipeRow(for recipe: Recipe) -> some View {
+        NavigationLink(destination: RecipeDetailView(recipe: recipe, profileManager: profileManager)) {
+            HStack(spacing: 12) {
+                recipeIcon(for: recipe)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(recipe.title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text(recipe.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding(12)
+            .background(recipeCardBackground())
+        }
+    }
+    
+    @ViewBuilder
+    private func recipeIcon(for recipe: Recipe) -> some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(.ultraThinMaterial)
+            .frame(width: 48, height: 48)
+            .overlay(
+                Image(systemName: recipe.imageName)
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+            )
+    }
+    
+    @ViewBuilder
+    private func recipeCardBackground() -> some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(.thinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(.white.opacity(0.15), lineWidth: 1)
+            )
+    }
 }
 
 #Preview {
     NavigationStack {
-        ListView()
+        ListView(profileManager: UserProfileManager())
     }
 }

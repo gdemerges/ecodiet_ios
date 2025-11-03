@@ -1,8 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct ProfileView: View {
-    @State private var profileManager = UserProfileManager()
-    @State private var dataManager = RecipeDataManager()
+    let profileManager: UserProfileManager
+    let dataManager: SwiftDataManager
     
     var body: some View {
         ZStack {
@@ -11,26 +12,26 @@ struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     // En-tête du profil
-                    ProfileHeaderView(profile: profileManager.userProfile)
+                    ProfileHeaderView(profile: profileManager.userProfile ?? UserProfile())
                     
                     // Statistiques rapides
                     ProfileStatsView(
-                        favoriteCount: profileManager.userProfile.favoriteRecipes.count,
+                        favoriteCount: profileManager.userProfile?.favoriteRecipes.count ?? 0,
                         folderCount: dataManager.folders.count,
-                        memberSince: profileManager.userProfile.joinDate
+                        memberSince: profileManager.userProfile?.joinDate ?? Date()
                     )
                     
                     // Recettes favorites
-                    if !profileManager.userProfile.favoriteRecipes.isEmpty {
+                    if let favoriteRecipes = profileManager.userProfile?.favoriteRecipes, !favoriteRecipes.isEmpty {
                         ProfileSectionView(
                             title: "Mes recettes favorites",
                             icon: "heart.fill",
                             content: {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 16) {
-                                        ForEach(profileManager.userProfile.favoriteRecipes) { recipe in
+                                        ForEach(favoriteRecipes) { recipe in
                                             NavigationLink {
-                                                RecipeDetailView(recipe: recipe)
+                                                RecipeDetailView(recipe: recipe, profileManager: profileManager)
                                             } label: {
                                                 FavoriteRecipeCard(recipe: recipe)
                                             }
@@ -89,22 +90,22 @@ struct ProfileView: View {
                             VStack(spacing: 16) {
                                 PreferenceRow(
                                     title: "Niveau de cuisine",
-                                    value: profileManager.userProfile.cookingLevel.rawValue,
+                                    value: profileManager.userProfile?.cookingLevel.rawValue ?? CookingLevel.beginner.rawValue,
                                     icon: "chef.hat"
                                 )
                                 
-                                if !profileManager.userProfile.dietaryPreferences.isEmpty {
+                                if let preferences = profileManager.userProfile?.dietaryPreferences, !preferences.isEmpty {
                                     PreferenceRow(
                                         title: "Préférences alimentaires",
-                                        value: profileManager.userProfile.dietaryPreferences.joined(separator: ", "),
+                                        value: preferences.joined(separator: ", "),
                                         icon: "leaf"
                                     )
                                 }
                                 
-                                if !profileManager.userProfile.allergies.isEmpty {
+                                if let allergies = profileManager.userProfile?.allergies, !allergies.isEmpty {
                                     PreferenceRow(
                                         title: "Allergies",
-                                        value: profileManager.userProfile.allergies.joined(separator: ", "),
+                                        value: allergies.joined(separator: ", "),
                                         icon: "exclamationmark.triangle"
                                     )
                                 }
@@ -407,7 +408,14 @@ struct ProfileActionButton: View {
 }
 
 #Preview {
-    NavigationStack {
-        ProfileView()
+    let schema = Schema([Recipe.self, RecipeFolder.self, UserProfile.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+    let context = ModelContext(container)
+    let manager = SwiftDataManager(modelContext: context)
+    let upm = UserProfileManager()
+    upm.configure(with: manager)
+    return NavigationStack {
+        ProfileView(profileManager: upm, dataManager: manager)
     }
 }
