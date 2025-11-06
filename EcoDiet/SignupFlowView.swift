@@ -235,9 +235,8 @@ struct SignupFlowView: View {
                             name: firstName,
                             email: email
                         )
-                        
-                        // Update the profile with the collected data
-                        var updatedProfile = profile
+
+                        let updatedProfile = profile
                         updatedProfile.dietaryPreferences = dietaryPreferences
                         updatedProfile.allergies = allergies
                         updatedProfile.cookingLevel = cookingLevel

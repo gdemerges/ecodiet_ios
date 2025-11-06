@@ -8,17 +8,24 @@ final class Recipe: Identifiable, Hashable {
     var subtitle: String
     var imageName: String
     var timestamp: Date
+    var carbonFootprint: Double // Empreinte carbone en g CO2eq par portion
     
     // Relations
     var folders: [RecipeFolder] = []
     var userProfiles: [UserProfile] = [] // Pour les favoris
     
-    init(title: String, subtitle: String, imageName: String) {
+    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000) {
         self.id = UUID()
         self.title = title
         self.subtitle = subtitle
         self.imageName = imageName
         self.timestamp = Date()
+        self.carbonFootprint = carbonFootprint
+    }
+    
+    // Calcul de l'Eco-Score basé sur l'empreinte carbone
+    var ecoScore: EcoScore {
+        EcoScore.fromCarbonFootprint(carbonFootprint)
     }
     
     // Pour la compatibilité Hashable
@@ -28,6 +35,75 @@ final class Recipe: Identifiable, Hashable {
     
     static func == (lhs: Recipe, rhs: Recipe) -> Bool {
         lhs.id == rhs.id
+    }
+}
+
+// Système d'Eco-Score similaire au Nutri-Score
+enum EcoScore: String, CaseIterable {
+    case a = "A"
+    case b = "B"
+    case c = "C"
+    case d = "D"
+    case e = "E"
+    
+    // Calcul de l'Eco-Score basé sur les émissions de CO2 (en grammes par portion)
+    static func fromCarbonFootprint(_ carbonFootprint: Double) -> EcoScore {
+        switch carbonFootprint {
+        case ..<500:        // Moins de 500g CO2eq : Excellent
+            return .a
+        case 500..<1000:    // 500-1000g CO2eq : Bon
+            return .b
+        case 1000..<2000:   // 1-2kg CO2eq : Moyen
+            return .c
+        case 2000..<3500:   // 2-3.5kg CO2eq : Médiocre
+            return .d
+        default:            // Plus de 3.5kg CO2eq : Mauvais
+            return .e
+        }
+    }
+    
+    // Couleur associée à chaque score
+    var color: String {
+        switch self {
+        case .a: return "ecoscore_a"  // Vert foncé
+        case .b: return "ecoscore_b"  // Vert clair
+        case .c: return "ecoscore_c"  // Jaune
+        case .d: return "ecoscore_d"  // Orange
+        case .e: return "ecoscore_e"  // Rouge
+        }
+    }
+    
+    // Couleur SwiftUI
+    var swiftUIColor: (red: Double, green: Double, blue: Double) {
+        switch self {
+        case .a: return (0.0, 0.6, 0.2)   // Vert foncé
+        case .b: return (0.4, 0.8, 0.2)   // Vert clair
+        case .c: return (1.0, 0.8, 0.0)   // Jaune
+        case .d: return (1.0, 0.5, 0.0)   // Orange
+        case .e: return (0.9, 0.2, 0.1)   // Rouge
+        }
+    }
+    
+    // Description du score
+    var description: String {
+        switch self {
+        case .a: return "Très faible impact"
+        case .b: return "Faible impact"
+        case .c: return "Impact modéré"
+        case .d: return "Impact élevé"
+        case .e: return "Impact très élevé"
+        }
+    }
+    
+    // Emoji associé
+    var emoji: String {
+        switch self {
+        case .a: return "🌱"
+        case .b: return "🍃"
+        case .c: return "⚠️"
+        case .d: return "🔶"
+        case .e: return "🔴"
+        }
     }
 }
 

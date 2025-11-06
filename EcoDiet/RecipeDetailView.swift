@@ -66,6 +66,12 @@ struct RecipeDetailView: View {
                         Divider()
                             .padding(.vertical, 8)
                         
+                        // Eco-Score - Impact environnemental
+                        EcoScoreDetailView(recipe: recipe)
+                        
+                        Divider()
+                            .padding(.vertical, 8)
+                        
                         // Ingrédients
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Ingrédients")

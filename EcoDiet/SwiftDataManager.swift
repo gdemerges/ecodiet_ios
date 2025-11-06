@@ -67,8 +67,8 @@ class SwiftDataManager {
     // MARK: - Création des données par défaut
     private func createDefaultUserProfile() {
         let profile = UserProfile(
-            name: "Marie Dupont",
-            email: "marie.dupont@email.com"
+            name: "Guillaume",
+            email: "guillaume@email.com"
         )
         
         // Données d'exemple
@@ -88,10 +88,29 @@ class SwiftDataManager {
     
     private func createDefaultRecipes() {
         let defaultRecipes = [
-            Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf"),
-            Recipe(title: "Salade césar", subtitle: "Poulet, parmesan", imageName: "fork.knife"),
-            Recipe(title: "Pâtes complètes", subtitle: "Tomates & basilic", imageName: "takeoutbag.and.cup.and.straw"),
-            Recipe(title: "Soupe de saison", subtitle: "Potiron & coco", imageName: "cup.and.saucer")
+            // Eco-Score A : < 500g CO2eq - Très faible impact
+            Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf", carbonFootprint: 350),
+            
+            // Eco-Score B : 500-1000g CO2eq - Faible impact
+            Recipe(title: "Pâtes complètes", subtitle: "Tomates & basilic", imageName: "takeoutbag.and.cup.and.straw", carbonFootprint: 650),
+            
+            // Eco-Score C : 1000-2000g CO2eq - Impact modéré
+            Recipe(title: "Salade césar", subtitle: "Poulet, parmesan", imageName: "fork.knife", carbonFootprint: 1400),
+            
+            // Eco-Score A : < 500g CO2eq - Très faible impact
+            Recipe(title: "Soupe de saison", subtitle: "Potiron & coco", imageName: "cup.and.saucer", carbonFootprint: 280),
+            
+            // Eco-Score B : 500-1000g CO2eq - Faible impact
+            Recipe(title: "Curry de légumes", subtitle: "Épices douces", imageName: "flame", carbonFootprint: 520),
+            
+            // Eco-Score D : 2000-3500g CO2eq - Impact élevé
+            Recipe(title: "Burger maison", subtitle: "Bœuf, fromage", imageName: "cart", carbonFootprint: 2800),
+            
+            // Eco-Score C : 1000-2000g CO2eq - Impact modéré
+            Recipe(title: "Poisson grillé", subtitle: "Légumes vapeur", imageName: "fish", carbonFootprint: 1200),
+            
+            // Eco-Score A : < 500g CO2eq - Très faible impact
+            Recipe(title: "Salade quinoa", subtitle: "Avocat, pois chiches", imageName: "leaf.circle", carbonFootprint: 420)
         ]
         
         for recipe in defaultRecipes {
