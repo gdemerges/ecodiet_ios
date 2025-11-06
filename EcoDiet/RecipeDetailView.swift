@@ -47,7 +47,7 @@ struct RecipeDetailView: View {
                             InfoCard(
                                 icon: "clock",
                                 title: "Temps",
-                                value: "25 min"
+                                value: "\(recipe.preparationTime) min"
                             )
                             
                             InfoCard(

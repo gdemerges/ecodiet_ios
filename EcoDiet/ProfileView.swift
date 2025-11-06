@@ -163,27 +163,62 @@ struct ProfileView: View {
 
 struct ProfileHeaderView: View {
     let profile: UserProfile
+    @State private var isAppearing = false
     
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: profile.profileImageName)
-                .font(.system(size: 80, weight: .light))
-                .foregroundStyle(.primary)
-                .padding(20)
-                .background(.ultraThinMaterial, in: Circle())
-            
-            VStack(spacing: 4) {
-                Text(profile.name)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.primary)
+        VStack(spacing: 20) {
+            // Avatar avec effet de profondeur et gradient
+            ZStack {
+                // Cercle de fond animé
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.3, green: 0.7, blue: 0.4),
+                                Color(red: 0.2, green: 0.6, blue: 0.5)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120, height: 120)
+                    .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.4), radius: 20, x: 0, y: 10)
+                    .scaleEffect(isAppearing ? 1.0 : 0.8)
                 
-                Text(profile.email)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                // Icône profil
+                Image(systemName: profile.profileImageName)
+                    .font(.system(size: 50, weight: .medium))
+                    .foregroundStyle(.white)
+                    .scaleEffect(isAppearing ? 1.0 : 0.5)
+            }
+            
+            // Informations utilisateur
+            VStack(spacing: 6) {
+                Text(profile.name)
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .opacity(isAppearing ? 1 : 0)
+                    .offset(y: isAppearing ? 0 : 10)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "envelope.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(profile.email)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .opacity(isAppearing ? 1 : 0)
+                .offset(y: isAppearing ? 0 : 10)
             }
         }
         .padding(.horizontal, 24)
-        .padding(.top, 16)
+        .padding(.top, 24)
+        .onAppear {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
+                isAppearing = true
+            }
+        }
     }
 }
 
@@ -191,6 +226,7 @@ struct ProfileStatsView: View {
     let favoriteCount: Int
     let folderCount: Int
     let memberSince: Date
+    @State private var isAppearing = false
     
     private var memberSinceText: String {
         let formatter = DateFormatter()
@@ -199,38 +235,37 @@ struct ProfileStatsView: View {
     }
     
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 16) {
             StatCard(
                 title: "Favoris",
                 value: "\(favoriteCount)",
-                icon: "heart.fill"
+                icon: "heart.fill",
+                gradient: [Color(red: 0.9, green: 0.3, blue: 0.3), Color(red: 1.0, green: 0.4, blue: 0.4)],
+                isAppearing: isAppearing
             )
-            
-            Divider()
-                .frame(height: 40)
             
             StatCard(
                 title: "Dossiers",
                 value: "\(folderCount)",
-                icon: "folder.fill"
+                icon: "folder.fill",
+                gradient: [Color(red: 0.9, green: 0.6, blue: 0.2), Color(red: 1.0, green: 0.7, blue: 0.3)],
+                isAppearing: isAppearing
             )
-            
-            Divider()
-                .frame(height: 40)
             
             StatCard(
-                title: "Membre depuis",
-                value: memberSinceText,
-                icon: "calendar"
+                title: "Depuis",
+                value: memberSinceText.prefix(10).description,
+                icon: "calendar",
+                gradient: [Color(red: 0.3, green: 0.7, blue: 0.4), Color(red: 0.4, green: 0.8, blue: 0.5)],
+                isAppearing: isAppearing
             )
         }
-        .padding(.vertical, 16)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(.white.opacity(0.2), lineWidth: 1)
-        )
         .padding(.horizontal, 24)
+        .onAppear {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
+                isAppearing = true
+            }
+        }
     }
 }
 
@@ -238,22 +273,65 @@ struct StatCard: View {
     let title: String
     let value: String
     let icon: String
+    let gradient: [Color]
+    let isAppearing: Bool
     
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(.primary)
+        VStack(spacing: 12) {
+            // Icône avec gradient
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 50, height: 50)
+                    .shadow(color: gradient[0].opacity(0.3), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .scaleEffect(isAppearing ? 1.0 : 0.5)
             
-            Text(value)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            VStack(spacing: 4) {
+                Text(value)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .opacity(isAppearing ? 1 : 0)
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 6)
     }
 }
 
@@ -270,13 +348,22 @@ struct ProfileSectionView<Content: View>: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
+            HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.3, green: 0.7, blue: 0.4),
+                                Color(red: 0.2, green: 0.6, blue: 0.5)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                 
                 Text(title)
-                    .font(.title3.weight(.semibold))
+                    .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
                 
                 Spacer()
@@ -290,61 +377,195 @@ struct ProfileSectionView<Content: View>: View {
 
 struct FavoriteRecipeCard: View {
     let recipe: Recipe
+    @State private var isAppearing = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .frame(width: 160, height: 100)
-                Image(systemName: recipe.imageName)
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundStyle(.primary)
+            ZStack(alignment: .topTrailing) {
+                // Fond avec gradient
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.95, green: 0.97, blue: 0.95),
+                                Color(red: 0.92, green: 0.95, blue: 0.92)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 180, height: 120)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.4, green: 0.7, blue: 0.4).opacity(0.3),
+                                        Color(red: 0.3, green: 0.6, blue: 0.5).opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                
+                // Icône
+                VStack {
+                    Spacer()
+                    Image(systemName: recipe.imageName)
+                        .font(.system(size: 36, weight: .medium))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.3, green: 0.6, blue: 0.4),
+                                    Color(red: 0.2, green: 0.5, blue: 0.5)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .scaleEffect(isAppearing ? 1.0 : 0.8)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+                
+                // Badge Eco-Score
+                EcoScoreBadge(ecoScore: recipe.ecoScore, size: .small)
+                    .padding(8)
+                    .scaleEffect(isAppearing ? 1.0 : 0.5)
             }
+            .frame(width: 180, height: 120)
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(recipe.title)
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+                
                 Text(recipe.subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
         }
-        .padding(8)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 6)
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
+                isAppearing = true
+            }
+        }
     }
 }
 
 struct ProfileFolderRow: View {
     let folder: RecipeFolder
+    @State private var isPressed = false
+    
+    // Couleurs écologiques
+    private var gradientColors: [Color] {
+        let colors: [[Color]] = [
+            [Color(red: 0.4, green: 0.7, blue: 0.4), Color(red: 0.3, green: 0.8, blue: 0.5)],
+            [Color(red: 0.2, green: 0.6, blue: 0.8), Color(red: 0.3, green: 0.7, blue: 0.9)],
+            [Color(red: 0.5, green: 0.7, blue: 0.3), Color(red: 0.6, green: 0.8, blue: 0.4)],
+            [Color(red: 0.9, green: 0.6, blue: 0.2), Color(red: 1.0, green: 0.7, blue: 0.3)],
+            [Color(red: 0.8, green: 0.3, blue: 0.3), Color(red: 0.9, green: 0.4, blue: 0.4)],
+            [Color(red: 0.5, green: 0.4, blue: 0.7), Color(red: 0.6, green: 0.5, blue: 0.8)]
+        ]
+        let index = abs(folder.id.hashValue) % colors.count
+        return colors[index]
+    }
     
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: folder.imageName)
-                .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(.primary)
-                .frame(width: 32, height: 32)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        HStack(spacing: 14) {
+            // Icône avec gradient
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: gradientColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 44, height: 44)
+                    .shadow(color: gradientColors[0].opacity(0.3), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: folder.imageName)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .scaleEffect(isPressed ? 0.9 : 1.0)
+            }
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(folder.title)
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
-                Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "fork.knife")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.tertiary)
+                .scaleEffect(isPressed ? 1.2 : 1.0)
+                .offset(x: isPressed ? 3 : 0)
         }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .onLongPressGesture(minimumDuration: .infinity, maximumDistance: .infinity, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
     }
 }
 

@@ -9,18 +9,20 @@ final class Recipe: Identifiable, Hashable {
     var imageName: String
     var timestamp: Date
     var carbonFootprint: Double // Empreinte carbone en g CO2eq par portion
+    var preparationTime: Int // Temps de préparation en minutes
     
     // Relations
     var folders: [RecipeFolder] = []
     var userProfiles: [UserProfile] = [] // Pour les favoris
     
-    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000) {
+    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000, preparationTime: Int = 30) {
         self.id = UUID()
         self.title = title
         self.subtitle = subtitle
         self.imageName = imageName
         self.timestamp = Date()
         self.carbonFootprint = carbonFootprint
+        self.preparationTime = preparationTime
     }
     
     // Calcul de l'Eco-Score basé sur l'empreinte carbone
