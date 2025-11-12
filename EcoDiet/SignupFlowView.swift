@@ -3,8 +3,8 @@ import SwiftUI
 struct UserPreferences {
     var isVegetarian: Bool
     var isVegan: Bool
-    var isGlutenFree: Bool
-    var isLactoseFree: Bool
+    var isFlexitarian: Bool
+    var isOmnivore: Bool
 }
 
 struct SignupFlowView: View {
@@ -19,8 +19,8 @@ struct SignupFlowView: View {
 
     @State private var isVegetarian: Bool = false
     @State private var isVegan: Bool = false
-    @State private var isGlutenFree: Bool = false
-    @State private var isLactoseFree: Bool = false
+    @State private var isFlexitarian: Bool = false
+    @State private var isOmnivore: Bool = false
 
     @State private var allergies: [String] = []
     @State private var newAllergy: String = ""
@@ -187,18 +187,34 @@ struct SignupFlowView: View {
                 .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.2), lineWidth: 1))
                 .shadow(color: .black.opacity(0.06), radius: 20, x: 0, y: 12)
 
-                Button {
-                    withAnimation { step = .preferences }
-                } label: {
-                    Text("Continuer")
+                HStack(spacing: 12) {
+                    Button {
+                        withAnimation { step = .credentials }
+                    } label: {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Retour")
+                        }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .bold()
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(primaryGreen)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                    Button {
+                        withAnimation { step = .preferences }
+                    } label: {
+                        Text("Continuer")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .bold()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(primaryGreen)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .disabled(!isProfileValid)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(primaryGreen)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .disabled(!isProfileValid)
             }
             .padding()
         }
@@ -217,8 +233,8 @@ struct SignupFlowView: View {
                 LazyVGrid(columns: columns, spacing: 16) {
                     preferenceCard(title: "Végétarien", systemImage: "leaf", isOn: $isVegetarian)
                     preferenceCard(title: "Végan", systemImage: "leaf.circle", isOn: $isVegan)
-                    preferenceCard(title: "Sans gluten", systemImage: "wheat.slash", isOn: $isGlutenFree)
-                    preferenceCard(title: "Sans lactose", systemImage: "drop.triangle", isOn: $isLactoseFree)
+                    preferenceCard(title: "Flexitarien", systemImage: "fork.knife", isOn: $isFlexitarian)
+                    preferenceCard(title: "Omnivore", systemImage: "pawprint.fill", isOn: $isOmnivore)
                 }
                 .padding(.horizontal)
 
@@ -228,9 +244,9 @@ struct SignupFlowView: View {
                         var dietaryPreferences: [String] = []
                         if isVegetarian { dietaryPreferences.append("Végétarien") }
                         if isVegan { dietaryPreferences.append("Végan") }
-                        if isGlutenFree { dietaryPreferences.append("Sans gluten") }
-                        if isLactoseFree { dietaryPreferences.append("Sans lactose") }
-                        
+                        if isFlexitarian { dietaryPreferences.append("Flexitarien") }
+                        if isOmnivore { dietaryPreferences.append("Omnivore") }
+
                         let profile = UserProfile(
                             name: firstName,
                             email: email
@@ -240,7 +256,7 @@ struct SignupFlowView: View {
                         updatedProfile.dietaryPreferences = dietaryPreferences
                         updatedProfile.allergies = allergies
                         updatedProfile.cookingLevel = cookingLevel
-                        
+
                         onComplete(email, password, updatedProfile)
                         dismiss()
                     } label: {
