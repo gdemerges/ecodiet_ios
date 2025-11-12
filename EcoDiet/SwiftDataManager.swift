@@ -31,9 +31,8 @@ class SwiftDataManager {
             createDefaultRecipes()
         }
         
-        if folders.isEmpty {
-            createDefaultFolders()
-        }
+        // Ne plus créer automatiquement les dossiers par défaut
+        // L'utilisateur devra les créer lui-même
     }
     
     private func loadUserProfile() {
@@ -56,12 +55,13 @@ class SwiftDataManager {
     }
     
     private func loadFolders() {
-        let descriptor = FetchDescriptor<RecipeFolder>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
-        do {
-            folders = try modelContext.fetch(descriptor)
-        } catch {
-            print("Erreur lors du chargement des dossiers: \(error)")
+        guard let profile = userProfile else {
+            folders = []
+            return
         }
+        
+        // Charger uniquement les dossiers de l'utilisateur actuel
+        folders = profile.folders.sorted { $0.timestamp > $1.timestamp }
     }
     
     // MARK: - Création des données par défaut
@@ -81,6 +81,8 @@ class SwiftDataManager {
         
         do {
             try modelContext.save()
+            // Créer les dossiers par défaut après avoir sauvegardé le profil
+            createDefaultFolders()
         } catch {
             print("Erreur lors de la création du profil par défaut: \(error)")
         }
@@ -89,28 +91,28 @@ class SwiftDataManager {
     private func createDefaultRecipes() {
         let defaultRecipes = [
             // Eco-Score A : < 500g CO2eq - Très faible impact
-            Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf", carbonFootprint: 350, preparationTime: 15),
+            Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf", carbonFootprint: 350, preparationTime: 15, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: []),
             
             // Eco-Score B : 500-1000g CO2eq - Faible impact
-            Recipe(title: "Pâtes complètes", subtitle: "Tomates & basilic", imageName: "takeoutbag.and.cup.and.straw", carbonFootprint: 650, preparationTime: 20),
+            Recipe(title: "Pâtes complètes", subtitle: "Tomates & basilic", imageName: "takeoutbag.and.cup.and.straw", carbonFootprint: 650, preparationTime: 20, dietaryTags: ["Végétarien", "Vegan"], allergens: ["Gluten"]),
             
             // Eco-Score C : 1000-2000g CO2eq - Impact modéré
-            Recipe(title: "Salade césar", subtitle: "Poulet, parmesan", imageName: "fork.knife", carbonFootprint: 1400, preparationTime: 25),
+            Recipe(title: "Salade césar", subtitle: "Poulet, parmesan", imageName: "fork.knife", carbonFootprint: 1400, preparationTime: 25, dietaryTags: ["Sans gluten"], allergens: ["Lactose", "Œufs"]),
             
             // Eco-Score A : < 500g CO2eq - Très faible impact
-            Recipe(title: "Soupe de saison", subtitle: "Potiron & coco", imageName: "cup.and.saucer", carbonFootprint: 280, preparationTime: 35),
+            Recipe(title: "Soupe de saison", subtitle: "Potiron & coco", imageName: "cup.and.saucer", carbonFootprint: 280, preparationTime: 35, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: []),
             
             // Eco-Score B : 500-1000g CO2eq - Faible impact
-            Recipe(title: "Curry de légumes", subtitle: "Épices douces", imageName: "flame", carbonFootprint: 520, preparationTime: 30),
+            Recipe(title: "Curry de légumes", subtitle: "Épices douces", imageName: "flame", carbonFootprint: 520, preparationTime: 30, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: []),
             
             // Eco-Score D : 2000-3500g CO2eq - Impact élevé
-            Recipe(title: "Burger maison", subtitle: "Bœuf, fromage", imageName: "cart", carbonFootprint: 2800, preparationTime: 40),
+            Recipe(title: "Burger maison", subtitle: "Bœuf, fromage", imageName: "cart", carbonFootprint: 2800, preparationTime: 40, dietaryTags: [], allergens: ["Gluten", "Lactose"]),
             
             // Eco-Score C : 1000-2000g CO2eq - Impact modéré
-            Recipe(title: "Poisson grillé", subtitle: "Légumes vapeur", imageName: "fish", carbonFootprint: 1200, preparationTime: 25),
+            Recipe(title: "Poisson grillé", subtitle: "Légumes vapeur", imageName: "fish", carbonFootprint: 1200, preparationTime: 25, dietaryTags: ["Sans gluten", "Sans lactose", "Pescetarien"], allergens: ["Poisson"]),
             
             // Eco-Score A : < 500g CO2eq - Très faible impact
-            Recipe(title: "Salade quinoa", subtitle: "Avocat, pois chiches", imageName: "leaf.circle", carbonFootprint: 420, preparationTime: 10)
+            Recipe(title: "Salade quinoa", subtitle: "Avocat, pois chiches", imageName: "leaf.circle", carbonFootprint: 420, preparationTime: 10, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: [])
         ]
         
         for recipe in defaultRecipes {
@@ -132,14 +134,17 @@ class SwiftDataManager {
     }
     
     private func createDefaultFolders() {
+        guard let profile = userProfile else { return }
+        
         let defaultFolders = [
-            RecipeFolder(title: "Recettes sport", imageName: "figure.run"),
-            RecipeFolder(title: "Recettes hiver", imageName: "snowflake"),
-            RecipeFolder(title: "Végétarien", imageName: "leaf.fill")
+            RecipeFolder(title: "Recettes sport", imageName: "figure.run", owner: profile),
+            RecipeFolder(title: "Recettes hiver", imageName: "snowflake", owner: profile),
+            RecipeFolder(title: "Végétarien", imageName: "leaf.fill", owner: profile)
         ]
         
         for folder in defaultFolders {
             modelContext.insert(folder)
+            profile.folders.append(folder)
         }
         
         folders = defaultFolders
@@ -163,6 +168,9 @@ class SwiftDataManager {
         
         modelContext.insert(profile)
         userProfile = profile
+        
+        // Créer les dossiers par défaut pour le nouveau profil
+        createDefaultFolders()
         
         do {
             try modelContext.save()
@@ -247,7 +255,11 @@ class SwiftDataManager {
     
     // MARK: - Gestion des dossiers
     func addFolder(_ folder: RecipeFolder) {
+        guard let profile = userProfile else { return }
+        
+        folder.owner = profile
         modelContext.insert(folder)
+        profile.folders.append(folder)
         folders.append(folder)
         
         do {
@@ -260,6 +272,7 @@ class SwiftDataManager {
     func deleteFolder(_ folder: RecipeFolder) {
         modelContext.delete(folder)
         folders.removeAll { $0.id == folder.id }
+        userProfile?.folders.removeAll { $0.id == folder.id }
         
         do {
             try modelContext.save()
@@ -293,6 +306,10 @@ class SwiftDataManager {
     }
     
     // MARK: - Utilitaires
+    func refreshFolders() {
+        loadFolders()
+    }
+    
     func clearAllData() {
         // Supprimer tous les objets
         do {

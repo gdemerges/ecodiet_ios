@@ -1,25 +1,14 @@
 import SwiftUI
+import SwiftData
 
 struct ListView: View {
     let profileManager: UserProfileManager
+    let dataManager: SwiftDataManager
     @State private var searchText: String = ""
 
-    let recipes: [Recipe] = [
-        Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf"),
-        Recipe(title: "Salade césar", subtitle: "Poulet, parmesan", imageName: "fork.knife"),
-        Recipe(title: "Pâtes complètes", subtitle: "Tomates & basilic", imageName: "takeoutbag.and.cup.and.straw"),
-        Recipe(title: "Soupe de saison", subtitle: "Potiron & coco", imageName: "cup.and.saucer"),
-        Recipe(title: "Riz aux légumes", subtitle: "Coloré et nutritif", imageName: "carrot"),
-        Recipe(title: "Quiche aux épinards", subtitle: "Pâte feuilletée maison", imageName: "circle.hexagongrid"),
-        Recipe(title: "Poulet rôti", subtitle: "Herbes de Provence", imageName: "bird"),
-        Recipe(title: "Saumon grillé", subtitle: "Citron et aneth", imageName: "fish"),
-        Recipe(title: "Curry de pois chiches", subtitle: "Épices douces", imageName: "flame"),
-        Recipe(title: "Tacos végétariens", subtitle: "Haricots noirs", imageName: "tortoise")
-    ]
-
     var filteredRecipes: [Recipe] {
-        if searchText.isEmpty { return recipes }
-        return recipes.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+        if searchText.isEmpty { return dataManager.recipes }
+        return dataManager.recipes.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
 
     var body: some View {
@@ -39,7 +28,7 @@ struct ListView: View {
     
     @ViewBuilder
     private func recipeRow(for recipe: Recipe) -> some View {
-        NavigationLink(destination: RecipeDetailView(recipe: recipe, profileManager: profileManager)) {
+        NavigationLink(destination: RecipeDetailView(recipe: recipe, profileManager: profileManager, dataManager: dataManager)) {
             HStack(spacing: 12) {
                 recipeIcon(for: recipe)
                 
@@ -83,7 +72,16 @@ struct ListView: View {
 }
 
 #Preview {
-    NavigationStack {
-        ListView(profileManager: UserProfileManager())
+    @MainActor in
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let schema = Schema([Recipe.self, RecipeFolder.self, UserProfile.self])
+    let container = try! ModelContainer(for: schema, configurations: config)
+    let context = ModelContext(container)
+    let manager = SwiftDataManager(modelContext: context)
+    let upm = UserProfileManager()
+    upm.configure(with: manager)
+    
+    return NavigationStack {
+        ListView(profileManager: upm, dataManager: manager)
     }
 }

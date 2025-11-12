@@ -4,6 +4,7 @@ import SwiftData
 struct ProfileView: View {
     let profileManager: UserProfileManager
     let dataManager: SwiftDataManager
+    @Binding var isAuthenticated: Bool
     
     var body: some View {
         ZStack {
@@ -31,7 +32,7 @@ struct ProfileView: View {
                                     HStack(spacing: 16) {
                                         ForEach(favoriteRecipes) { recipe in
                                             NavigationLink {
-                                                RecipeDetailView(recipe: recipe, profileManager: profileManager)
+                                                RecipeDetailView(recipe: recipe, profileManager: profileManager, dataManager: dataManager)
                                             } label: {
                                                 FavoriteRecipeCard(recipe: recipe)
                                             }
@@ -149,6 +150,18 @@ struct ProfileView: View {
                             title: "Confidentialité",
                             icon: "lock.fill",
                             action: { }
+                        )
+                        
+                        Divider()
+                            .padding(.vertical, 8)
+                        
+                        ProfileActionButton(
+                            title: "Déconnexion",
+                            icon: "arrow.right.square.fill",
+                            action: {
+                                isAuthenticated = false
+                            },
+                            destructive: true
                         )
                     }
                     .padding(.horizontal, 24)
@@ -599,23 +612,26 @@ struct ProfileActionButton: View {
     let title: String
     let icon: String
     let action: () -> Void
+    var destructive: Bool = false
     
     var body: some View {
         Button(action: action) {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(destructive ? .red : .primary)
                 
                 Text(title)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(destructive ? .red : .primary)
                 
                 Spacer()
                 
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if !destructive {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -637,6 +653,6 @@ struct ProfileActionButton: View {
     let upm = UserProfileManager()
     upm.configure(with: manager)
     return NavigationStack {
-        ProfileView(profileManager: upm, dataManager: manager)
+        ProfileView(profileManager: upm, dataManager: manager, isAuthenticated: .constant(true))
     }
 }

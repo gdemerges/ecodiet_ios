@@ -4,6 +4,7 @@ import SwiftData
 struct HomeView: View {
     let dataManager: SwiftDataManager
     let profileManager: UserProfileManager
+    @Binding var isAuthenticated: Bool
     @State private var headerAppeared = false
 
     private var greeting: String {
@@ -53,7 +54,11 @@ struct HomeView: View {
                         Spacer()
                         
                         NavigationLink {
-                            ProfileView(profileManager: profileManager, dataManager: dataManager)
+                            ProfileView(
+                                profileManager: profileManager,
+                                dataManager: dataManager,
+                                isAuthenticated: $isAuthenticated
+                            )
                         } label: {
                             ZStack {
                                 Circle()
@@ -82,27 +87,12 @@ struct HomeView: View {
                     .padding(.top, 8)
 
                     if !dataManager.folders.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "folder.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [
-                                                Color(red: 0.4, green: 0.7, blue: 0.4),
-                                                Color(red: 0.3, green: 0.6, blue: 0.5)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                
-                                Text("Mes dossiers")
-                                    .font(.title3.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                            }
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Mes dossiers")
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(.primary)
                             
-                            // Grille de dossiers compacts style Spotify
+                            // Grille de dossiers minimaliste
                             LazyVGrid(columns: [
                                 GridItem(.flexible(), spacing: 12),
                                 GridItem(.flexible(), spacing: 12)
@@ -156,7 +146,7 @@ struct HomeView: View {
                         HStack(spacing: 16) {
                             ForEach(dataManager.recipes) { recipe in
                                 NavigationLink {
-                                    RecipeDetailView(recipe: recipe, profileManager: profileManager)
+                                    RecipeDetailView(recipe: recipe, profileManager: profileManager, dataManager: dataManager)
                                 } label: {
                                     RecipeCard(recipe: recipe)
                                 }
@@ -187,7 +177,7 @@ struct HomeView: View {
                         }
                         Spacer()
                         NavigationLink {
-                            ListView(profileManager: profileManager)
+                            ListView(profileManager: profileManager, dataManager: dataManager)
                         } label: {
                             Text("Voir tout")
                                 .font(.subheadline.weight(.semibold))
@@ -203,7 +193,7 @@ struct HomeView: View {
                         HStack(spacing: 16) {
                             ForEach(dataManager.recipes) { recipe in
                                 NavigationLink {
-                                    RecipeDetailView(recipe: recipe, profileManager: profileManager)
+                                    RecipeDetailView(recipe: recipe, profileManager: profileManager, dataManager: dataManager)
                                 } label: {
                                     RecipeCard(recipe: recipe)
                                 }
@@ -703,115 +693,55 @@ struct SportsQuizCard: View {
     }
 }
 
-// Nouveau bouton compact de dossier style Spotify avec design écologique
+// Bouton compact de dossier avec design minimaliste
 struct CompactFolderButton: View {
     let folder: RecipeFolder
     @State private var isPressed = false
-    @State private var isHovered = false
-    
-    // Couleurs écologiques et culinaires
-    private var gradientColors: [Color] {
-        let colors: [[Color]] = [
-            [Color(red: 0.4, green: 0.7, blue: 0.4), Color(red: 0.3, green: 0.8, blue: 0.5)],  // Vert nature
-            [Color(red: 0.2, green: 0.6, blue: 0.8), Color(red: 0.3, green: 0.7, blue: 0.9)],  // Bleu eau
-            [Color(red: 0.5, green: 0.7, blue: 0.3), Color(red: 0.6, green: 0.8, blue: 0.4)],  // Vert prairie
-            [Color(red: 0.9, green: 0.6, blue: 0.2), Color(red: 1.0, green: 0.7, blue: 0.3)],  // Orange agrumes
-            [Color(red: 0.8, green: 0.3, blue: 0.3), Color(red: 0.9, green: 0.4, blue: 0.4)],  // Rouge tomate
-            [Color(red: 0.5, green: 0.4, blue: 0.7), Color(red: 0.6, green: 0.5, blue: 0.8)]   // Violet aubergine
-        ]
-        let index = abs(folder.id.hashValue) % colors.count
-        return colors[index]
-    }
     
     var body: some View {
-        HStack(spacing: 14) {
-            // Icône à gauche avec effet organique
-            ZStack {
-                // Fond avec gradient
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: gradientColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 56, height: 56)
-                
-                // Effet de brillance
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.3),
-                                Color.white.opacity(0.0)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .center
-                        )
-                    )
-                    .frame(width: 56, height: 56)
-                
-                // Icône
-                Image(systemName: folder.imageName)
-                    .font(.system(size: 26, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-                    .scaleEffect(isPressed ? 0.9 : 1.0)
-                    .rotationEffect(.degrees(isPressed ? -5 : 0))
-            }
-            .shadow(color: gradientColors[0].opacity(0.4), radius: 12, x: 0, y: 6)
+        HStack(spacing: 12) {
+            // Icône simple à gauche
+            Image(systemName: folder.imageName)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 40, height: 40)
+                .background(
+                    Circle()
+                        .fill(Color.primary.opacity(0.05))
+                )
             
-            // Texte à droite
-            VStack(alignment: .leading, spacing: 3) {
+            // Texte à gauche
+            VStack(alignment: .leading, spacing: 2) {
                 Text(folder.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 
-                HStack(spacing: 4) {
-                    Image(systemName: "fork.knife")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+                Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer(minLength: 0)
             
-            // Chevron avec animation
+            // Chevron discret
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.tertiary)
-                .scaleEffect(isPressed ? 1.2 : 1.0)
-                .offset(x: isPressed ? 3 : 0)
+                .offset(x: isPressed ? 2 : 0)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.primary.opacity(0.03))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.5),
-                            Color.white.opacity(0.1)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
         )
-        .scaleEffect(isPressed ? 0.97 : 1.0)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
-        .shadow(color: Color.black.opacity(isPressed ? 0.15 : 0.08), radius: isPressed ? 8 : 12, x: 0, y: isPressed ? 4 : 6)
         .onLongPressGesture(minimumDuration: .infinity, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
@@ -832,6 +762,6 @@ struct CompactFolderButton: View {
     let upm = UserProfileManager()
     upm.configure(with: manager)
     return NavigationStack {
-        HomeView(dataManager: manager, profileManager: upm)
+        HomeView(dataManager: manager, profileManager: upm, isAuthenticated: .constant(true))
     }
 }

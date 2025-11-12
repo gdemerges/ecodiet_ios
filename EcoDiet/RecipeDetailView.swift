@@ -1,9 +1,14 @@
 import SwiftUI
+import SwiftUI
+import SwiftData
 
 struct RecipeDetailView: View {
     let recipe: Recipe
     let profileManager: UserProfileManager
+    let dataManager: SwiftDataManager
     @Environment(\.dismiss) private var dismiss
+    @State private var showingFolderPicker = false
+    @State private var showingShareSheet = false
     
     var body: some View {
         ZStack {
@@ -158,7 +163,28 @@ struct RecipeDetailView: View {
                             }
                             
                             Button {
-                                // Action pour partager
+                                showingFolderPicker = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "folder.badge.plus")
+                                        .font(.system(size: 18, weight: .medium))
+                                    
+                                    Text("Ajouter à un dossier")
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundStyle(.primary)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(.primary.opacity(0.2), lineWidth: 1)
+                                )
+                            }
+                            
+                            Button {
+                                showingShareSheet = true
                             } label: {
                                 HStack {
                                     Image(systemName: "square.and.arrow.up")
@@ -186,6 +212,12 @@ struct RecipeDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingFolderPicker) {
+            FolderPickerView(recipe: recipe, dataManager: dataManager)
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            ShareSheet(items: [shareText])
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
@@ -199,6 +231,21 @@ struct RecipeDetailView: View {
                 }
             }
         }
+    }
+    
+    // Texte de partage pour la recette
+    private var shareText: String {
+        """
+        🍽️ Découvrez cette recette : \(recipe.title)
+        
+        \(recipe.subtitle)
+        
+        ⏱️ Temps de préparation : \(recipe.preparationTime) minutes
+        🌱 Eco-Score : \(recipe.ecoScore.rawValue) - \(recipe.ecoScore.description)
+        🌍 Empreinte carbone : \(Int(recipe.carbonFootprint))g CO2eq
+        
+        Partagé depuis EcoDiet - L'app pour une alimentation saine et durable ! 🌿
+        """
     }
     
     // Données d'exemple basées sur le type de recette
@@ -322,8 +369,217 @@ struct InfoCard: View {
     }
 }
 
+// Vue pour sélectionner un dossier ou en créer un nouveau
+struct FolderPickerView: View {
+    let recipe: Recipe
+    let dataManager: SwiftDataManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingNewFolderSheet = false
+    @State private var newFolderTitle = ""
+    @State private var selectedIcon = "folder"
+    
+    private let availableIcons = [
+        "folder", "folder.fill", "figure.run", "snowflake", "leaf.fill",
+        "flame", "moon.stars", "sun.max", "heart.fill", "star.fill"
+    ]
+    
+    var body: some View {
+        NavigationStack {
+            List {
+                if !dataManager.folders.isEmpty {
+                    Section("Dossiers existants") {
+                        ForEach(dataManager.folders) { folder in
+                            Button {
+                                addToFolder(folder)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: folder.imageName)
+                                        .font(.title3)
+                                        .foregroundStyle(folderColor(for: folder))
+                                        .frame(width: 32)
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(folder.title)
+                                            .font(.body)
+                                            .foregroundStyle(.primary)
+                                        
+                                        Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    if folder.recipes.contains(recipe) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.title3)
+                                            .foregroundStyle(.green)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Section {
+                    Button {
+                        showingNewFolderSheet = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.4, green: 0.7, blue: 0.4),
+                                            Color(red: 0.3, green: 0.6, blue: 0.5)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            Text("Créer un nouveau dossier")
+                                .font(.body)
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Ajouter à un dossier")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Fermer") {
+                        dismiss()
+                    }
+                }
+            }
+            .sheet(isPresented: $showingNewFolderSheet) {
+                NavigationStack {
+                    Form {
+                        Section("Informations du dossier") {
+                            TextField("Nom du dossier", text: $newFolderTitle)
+                            
+                            Picker("Icône", selection: $selectedIcon) {
+                                ForEach(availableIcons, id: \.self) { icon in
+                                    HStack {
+                                        Image(systemName: icon)
+                                        Text(icon)
+                                    }
+                                    .tag(icon)
+                                }
+                            }
+                        }
+                    }
+                    .navigationTitle("Nouveau dossier")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Annuler") {
+                                showingNewFolderSheet = false
+                                resetForm()
+                            }
+                        }
+                        
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Créer et ajouter") {
+                                createFolderAndAdd()
+                            }
+                            .disabled(newFolderTitle.isEmpty)
+                        }
+                    }
+                }
+                .presentationDetents([.medium])
+            }
+        }
+    }
+    
+    private func addToFolder(_ folder: RecipeFolder) {
+        if folder.recipes.contains(recipe) {
+            // Retirer de ce dossier
+            dataManager.removeRecipe(recipe, from: folder)
+        } else {
+            // Ajouter à ce dossier
+            dataManager.addRecipe(recipe, to: folder)
+        }
+    }
+    
+    private func createFolderAndAdd() {
+        let newFolder = RecipeFolder(
+            title: newFolderTitle,
+            imageName: selectedIcon
+        )
+        dataManager.addFolder(newFolder)
+        dataManager.addRecipe(recipe, to: newFolder)
+        
+        showingNewFolderSheet = false
+        resetForm()
+        dismiss()
+    }
+    
+    private func resetForm() {
+        newFolderTitle = ""
+        selectedIcon = "folder"
+    }
+    
+    // Couleur basée sur l'icône du dossier (même logique que CompactFolderButton)
+    private func folderColor(for folder: RecipeFolder) -> Color {
+        switch folder.imageName {
+        case "figure.run", "bolt.fill":
+            return Color(red: 0.95, green: 0.5, blue: 0.2) // Orange sport
+        case "snowflake", "drop.fill":
+            return Color(red: 0.3, green: 0.6, blue: 0.9) // Bleu hiver
+        case "leaf.fill", "leaf", "leaf.circle":
+            return Color(red: 0.4, green: 0.7, blue: 0.4) // Vert nature
+        case "flame", "sun.max":
+            return Color(red: 0.95, green: 0.4, blue: 0.2) // Orange/rouge feu
+        case "moon.stars":
+            return Color(red: 0.5, green: 0.4, blue: 0.7) // Violet nuit
+        case "heart.fill", "heart":
+            return Color(red: 0.9, green: 0.3, blue: 0.4) // Rose/rouge
+        case "star.fill", "star":
+            return Color(red: 0.95, green: 0.7, blue: 0.2) // Jaune doré
+        default:
+            return Color(red: 0.4, green: 0.7, blue: 0.4) // Vert par défaut
+        }
+    }
+}
+
+// Composant pour le partage natif iOS
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: items,
+            applicationActivities: nil
+        )
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
 #Preview {
-    NavigationStack {
-        RecipeDetailView(recipe: Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf"), profileManager: UserProfileManager())
+    @MainActor in
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let schema = Schema([
+        Recipe.self,
+        RecipeFolder.self,
+        UserProfile.self
+    ])
+    let container = try! ModelContainer(for: schema, configurations: config)
+    let context = ModelContext(container)
+    let manager = SwiftDataManager(modelContext: context)
+    let upm = UserProfileManager()
+    upm.configure(with: manager)
+    
+    return NavigationStack {
+        RecipeDetailView(
+            recipe: Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf"),
+            profileManager: upm,
+            dataManager: manager
+        )
     }
 }

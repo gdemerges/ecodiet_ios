@@ -10,12 +10,14 @@ final class Recipe: Identifiable, Hashable {
     var timestamp: Date
     var carbonFootprint: Double // Empreinte carbone en g CO2eq par portion
     var preparationTime: Int // Temps de préparation en minutes
+    var dietaryTags: [String] = [] // Tags: "Végétarien", "Vegan", "Sans gluten", "Sans lactose", etc.
+    var allergens: [String] = [] // Allergènes: "Fruits à coque", "Gluten", "Lactose", "Œufs", etc.
     
     // Relations
     var folders: [RecipeFolder] = []
     var userProfiles: [UserProfile] = [] // Pour les favoris
     
-    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000, preparationTime: Int = 30) {
+    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000, preparationTime: Int = 30, dietaryTags: [String] = [], allergens: [String] = []) {
         self.id = UUID()
         self.title = title
         self.subtitle = subtitle
@@ -23,6 +25,8 @@ final class Recipe: Identifiable, Hashable {
         self.timestamp = Date()
         self.carbonFootprint = carbonFootprint
         self.preparationTime = preparationTime
+        self.dietaryTags = dietaryTags
+        self.allergens = allergens
     }
     
     // Calcul de l'Eco-Score basé sur l'empreinte carbone
@@ -120,11 +124,15 @@ final class RecipeFolder: Identifiable, Hashable {
     @Relationship(deleteRule: .nullify, inverse: \Recipe.folders)
     var recipes: [Recipe] = []
     
-    init(title: String, imageName: String = "folder") {
+    // Lien avec l'utilisateur propriétaire
+    var owner: UserProfile?
+    
+    init(title: String, imageName: String = "folder", owner: UserProfile? = nil) {
         self.id = UUID()
         self.title = title
         self.imageName = imageName
         self.timestamp = Date()
+        self.owner = owner
     }
     
     // Pour la compatibilité Hashable
@@ -151,6 +159,9 @@ final class UserProfile {
     // Relations
     @Relationship(deleteRule: .nullify, inverse: \Recipe.userProfiles)
     var favoriteRecipes: [Recipe] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \RecipeFolder.owner)
+    var folders: [RecipeFolder] = []
     
     init(name: String = "", email: String = "", profileImageName: String = "person.crop.circle.fill", cookingLevel: CookingLevel = .beginner) {
         self.id = UUID()

@@ -22,15 +22,11 @@ struct ContentView: View {
                 if let _ = dataManager {
                     if isAuthenticated {
                         NavigationStack {
-                            HomeView(dataManager: dataManager!, profileManager: profileManager)
-                                .toolbar {
-                                    ToolbarItem(placement: .topBarLeading) {
-                                        Button("Déconnexion") {
-                                            isAuthenticated = false
-                                            // Les données restent persistantes avec SwiftData
-                                        }
-                                    }
-                                }
+                            HomeView(
+                                dataManager: dataManager!,
+                                profileManager: profileManager,
+                                isAuthenticated: $isAuthenticated
+                            )
                         }
                     } else {
                         LoginView(

@@ -19,23 +19,21 @@ struct FoldersView: View {
                     NavigationLink {
                         FolderDetailView(folder: folder, dataManager: dataManager)
                     } label: {
-                        HStack {
+                        HStack(spacing: 12) {
                             Image(systemName: folder.imageName)
-                                .font(.title2)
+                                .font(.title3)
                                 .foregroundStyle(.secondary)
-                                .frame(width: 30)
+                                .frame(width: 32)
                             
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text(folder.title)
-                                    .font(.headline)
+                                    .font(.body)
                                 Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            
-                            Spacer()
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 2)
                     }
                 }
                 .onDelete(perform: deleteFolder)
