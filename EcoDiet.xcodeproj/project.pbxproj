@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5731609F2EB65E970091E369 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 5731609E2EB65E970091E369 /* AsyncAlgorithms */; };
+		578C4A082EC5E1CE00CA1F6F /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 578C4A072EC5E1CE00CA1F6F /* AsyncAlgorithms */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,9 +34,22 @@
 		570D64FB2EB372EB005480FB /* EcoDietUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EcoDietUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		578C4A0A2EC5E36700CA1F6F /* Exceptions for "EcoDiet" folder in "EcoDiet" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 570D64E12EB372EA005480FB /* EcoDiet */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		570D64E42EB372EA005480FB /* EcoDiet */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				578C4A0A2EC5E36700CA1F6F /* Exceptions for "EcoDiet" folder in "EcoDiet" target */,
+			);
 			path = EcoDiet;
 			sourceTree = "<group>";
 		};
@@ -64,6 +78,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				578C4A082EC5E1CE00CA1F6F /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,6 +156,7 @@
 			);
 			name = EcoDietTests;
 			packageProductDependencies = (
+				578C4A072EC5E1CE00CA1F6F /* AsyncAlgorithms */,
 			);
 			productName = EcoDietTests;
 			productReference = 570D64F12EB372EB005480FB /* EcoDietTests.xctest */;
@@ -411,6 +427,8 @@
 				DEVELOPMENT_TEAM = 3DN5WMRWS5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EcoDiet/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "EcoDiet a besoin d'accéder à votre caméra pour scanner les codes-barres des produits alimentaires.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -443,6 +461,8 @@
 				DEVELOPMENT_TEAM = 3DN5WMRWS5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EcoDiet/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "EcoDiet a besoin d'accéder à votre caméra pour scanner les codes-barres des produits alimentaires.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -603,6 +623,11 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		5731609E2EB65E970091E369 /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5731609D2EB65E720091E369 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
+		};
+		578C4A072EC5E1CE00CA1F6F /* AsyncAlgorithms */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5731609D2EB65E720091E369 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
 			productName = AsyncAlgorithms;

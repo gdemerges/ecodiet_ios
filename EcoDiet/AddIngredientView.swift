@@ -12,6 +12,16 @@ struct AddIngredientView: View {
     @State private var addToFridge = true
     @State private var showingPopularIngredients = true
     
+    // OpenFoodFacts & Scanner
+    @State private var showingBarcodeScanner = false
+    @State private var showingPermissionDenied = false
+    @State private var showingGuide = false
+    @State private var isLoadingProduct = false
+    @State private var scannedProduct: OpenFoodFactsService.FoodProduct?
+    @State private var errorMessage: String?
+    @State private var showingError = false
+    private let openFoodFactsService = OpenFoodFactsService()
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -19,8 +29,16 @@ struct AddIngredientView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
+                        // Scanner de code-barres
+                        barcodeScannerButton
+                        
+                        // Produit scanné
+                        if let product = scannedProduct {
+                            scannedProductCard(product)
+                        }
+                        
                         // Ingrédients populaires
-                        if showingPopularIngredients {
+                        if showingPopularIngredients && scannedProduct == nil {
                             popularIngredientsSection
                         }
                         
@@ -34,6 +52,11 @@ struct AddIngredientView: View {
                     .padding(.bottom, 100)
                 }
                 
+                // Indicateur de chargement
+                if isLoadingProduct {
+                    loadingOverlay
+                }
+                
                 // Bouton de création fixe en bas
                 addIngredientButton
             }
@@ -45,7 +68,248 @@ struct AddIngredientView: View {
                         dismiss()
                     }
                 }
+                
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingGuide = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                            .foregroundStyle(Color(red: 0.5, green: 0.4, blue: 0.9))
+                    }
+                }
             }
+            .sheet(isPresented: $showingBarcodeScanner) {
+                BarcodeScannerView { barcode in
+                    showingBarcodeScanner = false
+                    handleScannedBarcode(barcode)
+                }
+            }
+            .sheet(isPresented: $showingPermissionDenied) {
+                CameraPermissionDeniedView()
+            }
+            .sheet(isPresented: $showingGuide) {
+                BarcodeScannerGuideView()
+            }
+            .alert("Erreur", isPresented: $showingError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage ?? "Une erreur est survenue")
+            }
+        }
+    }
+    
+    // MARK: - Barcode Scanner Button
+    
+    private var barcodeScannerButton: some View {
+        Button {
+            checkCameraPermissionAndScan()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.5, green: 0.4, blue: 0.9),
+                                    Color(red: 0.4, green: 0.3, blue: 0.8)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: "barcode.viewfinder")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Scanner un code-barres")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    Text("Recherche via OpenFoodFacts")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.5, green: 0.4, blue: 0.9).opacity(0.4),
+                                Color(red: 0.4, green: 0.3, blue: 0.8).opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2
+                    )
+            )
+            .shadow(color: Color(red: 0.5, green: 0.4, blue: 0.9).opacity(0.2), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    // MARK: - Scanned Product Card
+    
+    private func scannedProductCard(_ product: OpenFoodFactsService.FoodProduct) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Produit scanné")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                Button {
+                    withAnimation {
+                        scannedProduct = nil
+                        ingredientName = ""
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            
+            HStack(spacing: 12) {
+                // Image du produit ou placeholder
+                Group {
+                    if let imageUrlString = product.imageUrl,
+                       let imageUrl = URL(string: imageUrlString) {
+                        AsyncImage(url: imageUrl) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            productPlaceholder
+                        }
+                    } else {
+                        productPlaceholder
+                    }
+                }
+                .frame(width: 70, height: 70)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(product.name)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                    
+                    if let brand = product.brand {
+                        Text(brand)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    HStack(spacing: 8) {
+                        if let ecoScore = product.ecoscoreGrade?.uppercased() {
+                            scoreLabel("Eco: \(ecoScore)", color: ecoScoreColor(ecoScore))
+                        }
+                        
+                        if let nutriScore = product.nutriscoreGrade?.uppercased() {
+                            scoreLabel("Nutri: \(nutriScore)", color: nutriScoreColor(nutriScore))
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.3), lineWidth: 2)
+        )
+    }
+    
+    private var productPlaceholder: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.gray.opacity(0.2))
+            
+            Image(systemName: "photo")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+        }
+    }
+    
+    private func scoreLabel(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(color)
+            )
+    }
+    
+    private func ecoScoreColor(_ grade: String) -> Color {
+        switch grade {
+        case "A": return Color.green
+        case "B": return Color(red: 0.6, green: 0.8, blue: 0.3)
+        case "C": return Color.yellow
+        case "D": return Color.orange
+        case "E": return Color.red
+        default: return Color.gray
+        }
+    }
+    
+    private func nutriScoreColor(_ grade: String) -> Color {
+        switch grade {
+        case "A": return Color.green
+        case "B": return Color(red: 0.6, green: 0.8, blue: 0.3)
+        case "C": return Color.yellow
+        case "D": return Color.orange
+        case "E": return Color.red
+        default: return Color.gray
+        }
+    }
+    
+    // MARK: - Loading Overlay
+    
+    private var loadingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(.white)
+                
+                Text("Recherche du produit...")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+            }
+            .padding(32)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
         }
     }
     
@@ -385,6 +649,74 @@ struct AddIngredientView: View {
     }
     
     // MARK: - Helper Methods
+    
+    private func checkCameraPermissionAndScan() {
+        let status = CameraPermissionHelper.checkPermission()
+        
+        switch status {
+        case .authorized:
+            showingBarcodeScanner = true
+            
+        case .notDetermined:
+            Task {
+                let granted = await CameraPermissionHelper.requestPermission()
+                await MainActor.run {
+                    if granted {
+                        showingBarcodeScanner = true
+                    } else {
+                        showingPermissionDenied = true
+                    }
+                }
+            }
+            
+        case .denied:
+            showingPermissionDenied = true
+        }
+    }
+    
+    private func handleScannedBarcode(_ barcode: String) {
+        isLoadingProduct = true
+        
+        Task {
+            do {
+                if let product = try await openFoodFactsService.fetchProduct(barcode: barcode) {
+                    await MainActor.run {
+                        scannedProduct = product
+                        ingredientName = product.name
+                        selectedCategory = product.suggestedCategory
+                        selectedUnit = product.suggestedUnit
+                        
+                        // Essayer d'extraire la quantité du produit
+                        let extractedQty = product.extractedQuantity
+                        if extractedQty > 0 {
+                            // Convertir selon l'unité
+                            if product.suggestedUnit == .kilogram && extractedQty > 50 {
+                                quantity = extractedQty / 1000 // Convertir g en kg
+                            } else if product.suggestedUnit == .liter && extractedQty > 50 {
+                                quantity = extractedQty / 1000 // Convertir ml en L
+                            } else {
+                                quantity = extractedQty
+                            }
+                        }
+                        
+                        isLoadingProduct = false
+                    }
+                } else {
+                    await MainActor.run {
+                        isLoadingProduct = false
+                        errorMessage = "Produit non trouvé dans la base de données OpenFoodFacts"
+                        showingError = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isLoadingProduct = false
+                    errorMessage = error.localizedDescription
+                    showingError = true
+                }
+            }
+        }
+    }
     
     private func addPopularIngredient(_ ingredient: Ingredient) {
         let newIngredient = Ingredient(
