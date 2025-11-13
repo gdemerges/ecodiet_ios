@@ -20,6 +20,21 @@ extension Color {
     }
 }
 
+// Structure pour représenter un ingrédient requis dans une recette
+struct RecipeIngredient: Codable, Hashable {
+    let name: String
+    let quantity: Double
+    let unit: String
+    let isOptional: Bool
+    
+    init(name: String, quantity: Double, unit: String, isOptional: Bool = false) {
+        self.name = name
+        self.quantity = quantity
+        self.unit = unit
+        self.isOptional = isOptional
+    }
+}
+
 @Model
 final class Recipe: Identifiable, Hashable {
     @Attribute(.unique) var id: UUID
@@ -31,12 +46,13 @@ final class Recipe: Identifiable, Hashable {
     var preparationTime: Int // Temps de préparation en minutes
     var dietaryTags: [String] = [] // Tags: "Végétarien", "Vegan", "Sans gluten", "Sans lactose", etc.
     var allergens: [String] = [] // Allergènes: "Fruits à coque", "Gluten", "Lactose", "Œufs", etc.
+    var ingredientsData: Data? // Stockage sérialisé des ingrédients
     
     // Relations
     var folders: [RecipeFolder] = []
     var userProfiles: [UserProfile] = [] // Pour les favoris
     
-    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000, preparationTime: Int = 30, dietaryTags: [String] = [], allergens: [String] = []) {
+    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000, preparationTime: Int = 30, dietaryTags: [String] = [], allergens: [String] = [], requiredIngredients: [RecipeIngredient] = []) {
         self.id = UUID()
         self.title = title
         self.subtitle = subtitle
@@ -46,6 +62,18 @@ final class Recipe: Identifiable, Hashable {
         self.preparationTime = preparationTime
         self.dietaryTags = dietaryTags
         self.allergens = allergens
+        self.requiredIngredients = requiredIngredients
+    }
+    
+    // Computed property pour gérer les ingrédients
+    var requiredIngredients: [RecipeIngredient] {
+        get {
+            guard let data = ingredientsData else { return [] }
+            return (try? JSONDecoder().decode([RecipeIngredient].self, from: data)) ?? []
+        }
+        set {
+            ingredientsData = try? JSONEncoder().encode(newValue)
+        }
     }
     
     // Calcul de l'Eco-Score basé sur l'empreinte carbone

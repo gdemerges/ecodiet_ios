@@ -1,0 +1,430 @@
+import SwiftUI
+import SwiftData
+
+struct AddIngredientView: View {
+    let fridgeManager: FridgeManager
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var ingredientName = ""
+    @State private var selectedCategory: IngredientCategory = .vegetable
+    @State private var selectedUnit: IngredientUnit = .piece
+    @State private var quantity: Double = 1.0
+    @State private var addToFridge = true
+    @State private var showingPopularIngredients = true
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AuthBackground().ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Ingrédients populaires
+                        if showingPopularIngredients {
+                            popularIngredientsSection
+                        }
+                        
+                        Divider()
+                            .padding(.vertical, 8)
+                        
+                        // Formulaire personnalisé
+                        customIngredientForm
+                    }
+                    .padding(20)
+                    .padding(.bottom, 100)
+                }
+                
+                // Bouton de création fixe en bas
+                addIngredientButton
+            }
+            .navigationTitle("Nouvel ingrédient")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Popular Ingredients Section
+    
+    private var popularIngredientsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Ingrédients populaires")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                Button {
+                    withAnimation {
+                        showingPopularIngredients = false
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            
+            Text("Cliquez pour ajouter rapidement")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            popularIngredientsGrid
+        }
+        .padding(.top, 8)
+    }
+    
+    private var popularIngredientsGrid: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible(), spacing: 10),
+            GridItem(.flexible(), spacing: 10)
+        ], spacing: 10) {
+            ForEach(FridgeManager.popularIngredients().prefix(6)) { ingredient in
+                popularIngredientButton(ingredient)
+            }
+        }
+    }
+    
+    private func popularIngredientButton(_ ingredient: Ingredient) -> some View {
+        Button {
+            addPopularIngredient(ingredient)
+        } label: {
+            HStack(spacing: 10) {
+                ingredientIcon(for: ingredient)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(ingredient.name)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    Text(ingredient.category.rawValue)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer(minLength: 0)
+                
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(ingredient.category.color.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func ingredientIcon(for ingredient: Ingredient) -> some View {
+        ZStack {
+            Circle()
+                .fill(ingredient.category.color.opacity(0.2))
+                .frame(width: 36, height: 36)
+            
+            Image(systemName: ingredient.category.icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(ingredient.category.color)
+        }
+    }
+    
+    // MARK: - Custom Ingredient Form
+    
+    private var customIngredientForm: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Ajouter un ingrédient personnalisé")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            
+            ingredientNameField
+            categorySelector
+            quantityAndUnitSection
+            addToFridgeToggle
+        }
+    }
+    
+    private var ingredientNameField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Nom de l'ingrédient")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+            
+            TextField("Ex: Tomates, Poulet...", text: $ingredientName)
+                .textFieldStyle(.plain)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(selectedCategory.color.opacity(0.3), lineWidth: 1)
+                )
+        }
+    }
+    
+    private var categorySelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Catégorie")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(IngredientCategory.allCases, id: \.self) { category in
+                        categoryButton(category)
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+        }
+    }
+    
+    private func categoryButton(_ category: IngredientCategory) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedCategory = category
+            }
+        } label: {
+            VStack(spacing: 8) {
+                categoryIconCircle(category)
+                
+                Text(category.rawValue)
+                    .font(.caption2)
+                    .foregroundStyle(selectedCategory == category ? category.color : .secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(width: 70)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(selectedCategory == category ? category.color.opacity(0.1) : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(selectedCategory == category ? category.color : Color.clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func categoryIconCircle(_ category: IngredientCategory) -> some View {
+        ZStack {
+            Circle()
+                .fill(selectedCategory == category ? AnyShapeStyle(category.color.gradient) : AnyShapeStyle(category.color.opacity(0.2)))
+                .frame(width: 50, height: 50)
+            
+            Image(systemName: category.icon)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(selectedCategory == category ? .white : category.color)
+        }
+    }
+    
+    private var quantityAndUnitSection: some View {
+        HStack(spacing: 12) {
+            quantitySelector
+            unitSelector
+        }
+    }
+    
+    private var quantitySelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Quantité")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+            
+            HStack {
+                Button {
+                    if quantity > 0.5 {
+                        quantity -= 0.5
+                    }
+                } label: {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Text(String(format: "%.1f", quantity))
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(minWidth: 50)
+                
+                Button {
+                    quantity += 0.5
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+        }
+    }
+    
+    private var unitSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Unité")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+            
+            Menu {
+                ForEach(IngredientUnit.allCases, id: \.self) { unit in
+                    Button {
+                        selectedUnit = unit
+                    } label: {
+                        HStack {
+                            Text(unit.displayName)
+                            if selectedUnit == unit {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(selectedUnit.displayName)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+            }
+        }
+    }
+    
+    private var addToFridgeToggle: some View {
+        Toggle(isOn: $addToFridge) {
+            HStack(spacing: 8) {
+                Image(systemName: "refrigerator.fill")
+                    .font(.body)
+                    .foregroundStyle(addToFridge ? Color(red: 0.3, green: 0.7, blue: 0.4) : .secondary)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Ajouter au frigo")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                    
+                    Text("Marquer comme disponible")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .tint(Color(red: 0.3, green: 0.7, blue: 0.4))
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+    }
+    
+    // MARK: - Add Ingredient Button
+    
+    private var addIngredientButton: some View {
+        VStack {
+            Spacer()
+            
+            Button {
+                addCustomIngredient()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                    
+                    Text("Ajouter l'ingrédient")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.3, green: 0.7, blue: 0.4),
+                            Color(red: 0.2, green: 0.6, blue: 0.5)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.3), radius: 12, x: 0, y: 6)
+            }
+            .disabled(ingredientName.isEmpty)
+            .opacity(ingredientName.isEmpty ? 0.5 : 1.0)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func addPopularIngredient(_ ingredient: Ingredient) {
+        let newIngredient = Ingredient(
+            name: ingredient.name,
+            category: ingredient.category,
+            unit: ingredient.unit,
+            quantity: ingredient.quantity,
+            isInFridge: true,
+            imageName: ingredient.imageName
+        )
+        fridgeManager.addIngredient(newIngredient)
+        dismiss()
+    }
+    
+    private func addCustomIngredient() {
+        let newIngredient = Ingredient(
+            name: ingredientName,
+            category: selectedCategory,
+            unit: selectedUnit,
+            quantity: quantity,
+            isInFridge: addToFridge,
+            imageName: selectedCategory.icon
+        )
+        fridgeManager.addIngredient(newIngredient)
+        dismiss()
+    }
+}
+
+#Preview {
+    @MainActor in
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let schema = Schema([
+        Recipe.self,
+        RecipeFolder.self,
+        UserProfile.self,
+        Ingredient.self
+    ])
+    let container = try! ModelContainer(for: schema, configurations: config)
+    let context = ModelContext(container)
+    let fridgeManager = FridgeManager(modelContext: context)
+    
+    return AddIngredientView(fridgeManager: fridgeManager)
+}

@@ -4,6 +4,7 @@ import SwiftData
 struct HomeView: View {
     let dataManager: SwiftDataManager
     let profileManager: UserProfileManager
+    let fridgeManager: FridgeManager
     @Binding var isAuthenticated: Bool
     @State private var headerAppeared = false
 
@@ -85,6 +86,34 @@ struct HomeView: View {
                         .accessibilityLabel("Profil")
                     }
                     .padding(.top, 8)
+
+                    // Section Mon frigo - Nouvelle fonctionnalité
+                    VStack(spacing: 12) {
+                        // Carte principale frigo
+                        NavigationLink {
+                            FridgeView(fridgeManager: fridgeManager)
+                        } label: {
+                            FridgeQuickAccessCard(fridgeManager: fridgeManager)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // Carte recettes basées sur le frigo
+                        if !fridgeManager.ingredientsInFridge().isEmpty {
+                            NavigationLink {
+                                FridgeRecommendationsView(
+                                    dataManager: dataManager,
+                                    fridgeManager: fridgeManager,
+                                    profileManager: profileManager
+                                )
+                            } label: {
+                                FridgeRecipesQuickCard(
+                                    dataManager: dataManager,
+                                    fridgeManager: fridgeManager
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
 
                     if !dataManager.folders.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
@@ -770,20 +799,209 @@ struct CompactFolderButton: View {
     }
 }
 
+// Carte d'accès rapide au frigo
+struct FridgeQuickAccessCard: View {
+    let fridgeManager: FridgeManager
+    @State private var isAnimating = false
+    
+    var ingredientsCount: Int {
+        fridgeManager.ingredientsInFridge().count
+    }
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icône animée
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.4, green: 0.6, blue: 0.9),
+                                Color(red: 0.3, green: 0.5, blue: 0.8)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 70, height: 70)
+                
+                Image(systemName: "refrigerator.fill")
+                    .font(.system(size: 32, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .scaleEffect(isAnimating ? 1.05 : 1.0)
+            }
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Mon frigo")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.primary)
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
+                    
+                    Text("\(ingredientsCount) ingrédient\(ingredientsCount > 1 ? "s" : "") disponible\(ingredientsCount > 1 ? "s" : "")")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Text("Gérer mes ingrédients")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.4, green: 0.6, blue: 0.9).opacity(0.4),
+                            Color(red: 0.3, green: 0.5, blue: 0.8).opacity(0.2)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+        )
+        .shadow(color: Color(red: 0.4, green: 0.6, blue: 0.9).opacity(0.2), radius: 12, x: 0, y: 6)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                isAnimating = true
+            }
+        }
+    }
+}
+
+// Carte de recettes basées sur le frigo
+struct FridgeRecipesQuickCard: View {
+    let dataManager: SwiftDataManager
+    let fridgeManager: FridgeManager
+    @State private var pulseAnimation = false
+    
+    var availableRecipesCount: Int {
+        dataManager.recipes.filter { recipe in
+            fridgeManager.canMakeRecipe(recipe, allowMissing: 2)
+        }.count
+    }
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icône avec gradient
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.3, green: 0.7, blue: 0.4),
+                                Color(red: 0.2, green: 0.6, blue: 0.5)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 70, height: 70)
+                    .scaleEffect(pulseAnimation ? 1.05 : 1.0)
+                    .opacity(pulseAnimation ? 0.9 : 1.0)
+                
+                VStack(spacing: 2) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(.white)
+                    
+                    Text("\(availableRecipesCount)")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Recettes possibles")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.primary)
+                
+                Text("Basé sur vos ingrédients")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                
+                if availableRecipesCount > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.caption2)
+                        
+                        Text("\(availableRecipesCount) recette\(availableRecipesCount > 1 ? "s" : "") disponible\(availableRecipesCount > 1 ? "s" : "")")
+                            .font(.caption2.weight(.medium))
+                    }
+                    .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
+                } else {
+                    Text("Ajoutez des ingrédients")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.4),
+                            Color(red: 0.2, green: 0.6, blue: 0.5).opacity(0.2)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+        )
+        .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.2), radius: 12, x: 0, y: 6)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
+                pulseAnimation = true
+            }
+        }
+    }
+}
+
 #Preview {
     @MainActor in
     let config: ModelConfiguration = ModelConfiguration(isStoredInMemoryOnly: true)
     let schema: Schema = Schema([
         Recipe.self,
         RecipeFolder.self,
-        UserProfile.self
+        UserProfile.self,
+        Ingredient.self
     ])
     let container: ModelContainer = try! ModelContainer(for: schema, configurations: config)
     let context: ModelContext = ModelContext(container)
     let manager = SwiftDataManager(modelContext: context)
+    let fridgeManager = FridgeManager(modelContext: context)
     let upm = UserProfileManager()
     upm.configure(with: manager)
     return NavigationStack {
-        HomeView(dataManager: manager, profileManager: upm, isAuthenticated: .constant(true))
+        HomeView(dataManager: manager, profileManager: upm, fridgeManager: fridgeManager, isAuthenticated: .constant(true))
     }
 }

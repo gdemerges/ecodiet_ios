@@ -142,30 +142,176 @@ class SwiftDataManager {
     }
     
     private func createDefaultRecipes() {
+        // Bowl veggie
+        let bowlVeggie = Recipe(
+            title: "Bowl veggie",
+            subtitle: "Protéines végétales",
+            imageName: "leaf",
+            carbonFootprint: 350,
+            preparationTime: 15,
+            dietaryTags: ["Végétarien", "Vegan", "Sans gluten"],
+            allergens: [],
+            requiredIngredients: [
+                RecipeIngredient(name: "Quinoa", quantity: 200, unit: "g"),
+                RecipeIngredient(name: "Pois chiches", quantity: 150, unit: "g"),
+                RecipeIngredient(name: "Avocat", quantity: 1, unit: "pièce(s)"),
+                RecipeIngredient(name: "Épinards", quantity: 100, unit: "g"),
+                RecipeIngredient(name: "Carottes", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Graines de tournesol", quantity: 20, unit: "g", isOptional: true),
+                RecipeIngredient(name: "Huile d'olive", quantity: 2, unit: "c. à soupe"),
+                RecipeIngredient(name: "Citron", quantity: 1, unit: "pièce(s)")
+            ]
+        )
+        
+        // Pâtes complètes
+        let patesCompletes = Recipe(
+            title: "Pâtes complètes",
+            subtitle: "Tomates & basilic",
+            imageName: "takeoutbag.and.cup.and.straw",
+            carbonFootprint: 650,
+            preparationTime: 20,
+            dietaryTags: ["Végétarien", "Vegan"],
+            allergens: ["Gluten"],
+            requiredIngredients: [
+                RecipeIngredient(name: "Pâtes complètes", quantity: 300, unit: "g"),
+                RecipeIngredient(name: "Tomates", quantity: 400, unit: "g"),
+                RecipeIngredient(name: "Basilic", quantity: 1, unit: "pièce(s)"),
+                RecipeIngredient(name: "Ail", quantity: 3, unit: "pièce(s)"),
+                RecipeIngredient(name: "Huile d'olive", quantity: 3, unit: "c. à soupe"),
+                RecipeIngredient(name: "Parmesan", quantity: 50, unit: "g", isOptional: true),
+                RecipeIngredient(name: "Sel", quantity: 1, unit: "c. à café"),
+                RecipeIngredient(name: "Poivre", quantity: 1, unit: "c. à café")
+            ]
+        )
+        
+        // Salade césar
+        let saladeCesar = Recipe(
+            title: "Salade césar",
+            subtitle: "Poulet, parmesan",
+            imageName: "fork.knife",
+            carbonFootprint: 1400,
+            preparationTime: 25,
+            dietaryTags: ["Sans gluten"],
+            allergens: ["Lactose", "Œufs"],
+            requiredIngredients: [
+                RecipeIngredient(name: "Laitue romaine", quantity: 1, unit: "pièce(s)"),
+                RecipeIngredient(name: "Poulet", quantity: 200, unit: "g"),
+                RecipeIngredient(name: "Parmesan", quantity: 50, unit: "g"),
+                RecipeIngredient(name: "Croûtons", quantity: 50, unit: "g"),
+                RecipeIngredient(name: "Œufs", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Anchois", quantity: 4, unit: "pièce(s)"),
+                RecipeIngredient(name: "Huile d'olive", quantity: 3, unit: "c. à soupe"),
+                RecipeIngredient(name: "Ail", quantity: 1, unit: "pièce(s)")
+            ]
+        )
+        
+        // Soupe de saison
+        let soupeSaison = Recipe(
+            title: "Soupe de saison",
+            subtitle: "Potiron & coco",
+            imageName: "cup.and.saucer",
+            carbonFootprint: 280,
+            preparationTime: 35,
+            dietaryTags: ["Végétarien", "Vegan", "Sans gluten"],
+            allergens: [],
+            requiredIngredients: [
+                RecipeIngredient(name: "Potiron", quantity: 1, unit: "kg"),
+                RecipeIngredient(name: "Lait de coco", quantity: 200, unit: "ml"),
+                RecipeIngredient(name: "Oignon", quantity: 1, unit: "pièce(s)"),
+                RecipeIngredient(name: "Ail", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Gingembre", quantity: 20, unit: "g"),
+                RecipeIngredient(name: "Bouillon de légumes", quantity: 500, unit: "ml"),
+                RecipeIngredient(name: "Curcuma", quantity: 1, unit: "c. à café"),
+                RecipeIngredient(name: "Curry", quantity: 1, unit: "c. à café")
+            ]
+        )
+        
+        // Curry de légumes
+        let curryLegumes = Recipe(
+            title: "Curry de légumes",
+            subtitle: "Épices douces",
+            imageName: "flame",
+            carbonFootprint: 520,
+            preparationTime: 30,
+            dietaryTags: ["Végétarien", "Vegan", "Sans gluten"],
+            allergens: [],
+            requiredIngredients: [
+                RecipeIngredient(name: "Carottes", quantity: 3, unit: "pièce(s)"),
+                RecipeIngredient(name: "Potiron", quantity: 500, unit: "g"),
+                RecipeIngredient(name: "Pois chiches", quantity: 200, unit: "g"),
+                RecipeIngredient(name: "Lait de coco", quantity: 400, unit: "ml"),
+                RecipeIngredient(name: "Curry", quantity: 2, unit: "c. à soupe"),
+                RecipeIngredient(name: "Gingembre", quantity: 15, unit: "g"),
+                RecipeIngredient(name: "Ail", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Oignon", quantity: 1, unit: "pièce(s)")
+            ]
+        )
+        
+        // Burger maison
+        let burgerMaison = Recipe(
+            title: "Burger maison",
+            subtitle: "Bœuf, fromage",
+            imageName: "cart",
+            carbonFootprint: 2800,
+            preparationTime: 40,
+            dietaryTags: [],
+            allergens: ["Gluten", "Lactose"],
+            requiredIngredients: [
+                RecipeIngredient(name: "Bœuf haché", quantity: 400, unit: "g"),
+                RecipeIngredient(name: "Pain burger", quantity: 4, unit: "pièce(s)"),
+                RecipeIngredient(name: "Fromage cheddar", quantity: 4, unit: "pièce(s)"),
+                RecipeIngredient(name: "Tomates", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Laitue", quantity: 4, unit: "pièce(s)"),
+                RecipeIngredient(name: "Oignon", quantity: 1, unit: "pièce(s)")
+            ]
+        )
+        
+        // Poisson grillé
+        let poissonGrille = Recipe(
+            title: "Poisson grillé",
+            subtitle: "Légumes vapeur",
+            imageName: "fish",
+            carbonFootprint: 1200,
+            preparationTime: 25,
+            dietaryTags: ["Sans gluten", "Sans lactose", "Pescetarien"],
+            allergens: ["Poisson"],
+            requiredIngredients: [
+                RecipeIngredient(name: "Filet de poisson", quantity: 400, unit: "g"),
+                RecipeIngredient(name: "Carottes", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Brocoli", quantity: 200, unit: "g"),
+                RecipeIngredient(name: "Citron", quantity: 1, unit: "pièce(s)"),
+                RecipeIngredient(name: "Huile d'olive", quantity: 2, unit: "c. à soupe")
+            ]
+        )
+        
+        // Salade quinoa
+        let saladeQuinoa = Recipe(
+            title: "Salade quinoa",
+            subtitle: "Avocat, pois chiches",
+            imageName: "leaf.circle",
+            carbonFootprint: 420,
+            preparationTime: 10,
+            dietaryTags: ["Végétarien", "Vegan", "Sans gluten"],
+            allergens: [],
+            requiredIngredients: [
+                RecipeIngredient(name: "Quinoa", quantity: 200, unit: "g"),
+                RecipeIngredient(name: "Avocat", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Pois chiches", quantity: 150, unit: "g"),
+                RecipeIngredient(name: "Tomates", quantity: 2, unit: "pièce(s)"),
+                RecipeIngredient(name: "Citron", quantity: 1, unit: "pièce(s)"),
+                RecipeIngredient(name: "Huile d'olive", quantity: 3, unit: "c. à soupe")
+            ]
+        )
+        
         let defaultRecipes = [
-            // Eco-Score A : < 500g CO2eq - Très faible impact
-            Recipe(title: "Bowl veggie", subtitle: "Protéines végétales", imageName: "leaf", carbonFootprint: 350, preparationTime: 15, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: []),
-            
-            // Eco-Score B : 500-1000g CO2eq - Faible impact
-            Recipe(title: "Pâtes complètes", subtitle: "Tomates & basilic", imageName: "takeoutbag.and.cup.and.straw", carbonFootprint: 650, preparationTime: 20, dietaryTags: ["Végétarien", "Vegan"], allergens: ["Gluten"]),
-            
-            // Eco-Score C : 1000-2000g CO2eq - Impact modéré
-            Recipe(title: "Salade césar", subtitle: "Poulet, parmesan", imageName: "fork.knife", carbonFootprint: 1400, preparationTime: 25, dietaryTags: ["Sans gluten"], allergens: ["Lactose", "Œufs"]),
-            
-            // Eco-Score A : < 500g CO2eq - Très faible impact
-            Recipe(title: "Soupe de saison", subtitle: "Potiron & coco", imageName: "cup.and.saucer", carbonFootprint: 280, preparationTime: 35, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: []),
-            
-            // Eco-Score B : 500-1000g CO2eq - Faible impact
-            Recipe(title: "Curry de légumes", subtitle: "Épices douces", imageName: "flame", carbonFootprint: 520, preparationTime: 30, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: []),
-            
-            // Eco-Score D : 2000-3500g CO2eq - Impact élevé
-            Recipe(title: "Burger maison", subtitle: "Bœuf, fromage", imageName: "cart", carbonFootprint: 2800, preparationTime: 40, dietaryTags: [], allergens: ["Gluten", "Lactose"]),
-            
-            // Eco-Score C : 1000-2000g CO2eq - Impact modéré
-            Recipe(title: "Poisson grillé", subtitle: "Légumes vapeur", imageName: "fish", carbonFootprint: 1200, preparationTime: 25, dietaryTags: ["Sans gluten", "Sans lactose", "Pescetarien"], allergens: ["Poisson"]),
-            
-            // Eco-Score A : < 500g CO2eq - Très faible impact
-            Recipe(title: "Salade quinoa", subtitle: "Avocat, pois chiches", imageName: "leaf.circle", carbonFootprint: 420, preparationTime: 10, dietaryTags: ["Végétarien", "Vegan", "Sans gluten"], allergens: [])
+            bowlVeggie,
+            patesCompletes,
+            saladeCesar,
+            soupeSaison,
+            curryLegumes,
+            burgerMaison,
+            poissonGrille,
+            saladeQuinoa
         ]
         
         for recipe in defaultRecipes {

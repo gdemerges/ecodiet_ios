@@ -13,18 +13,20 @@ struct ContentView: View {
     @State private var isPresentingSignup = false
     @State private var profileManager = UserProfileManager()
     @State private var dataManager: SwiftDataManager?
+    @State private var fridgeManager: FridgeManager?
     
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         ZStack {
             Group {
-                if let _ = dataManager {
+                if let dataManager = dataManager, let fridgeManager = fridgeManager {
                     if isAuthenticated {
                         NavigationStack {
                             HomeView(
-                                dataManager: dataManager!,
+                                dataManager: dataManager,
                                 profileManager: profileManager,
+                                fridgeManager: fridgeManager,
                                 isAuthenticated: $isAuthenticated
                             )
                         }
@@ -55,6 +57,7 @@ struct ContentView: View {
             let swiftDataManager = SwiftDataManager(modelContext: modelContext)
             dataManager = swiftDataManager
             profileManager.configure(with: swiftDataManager)
+            fridgeManager = FridgeManager(modelContext: modelContext)
         }
     }
 
