@@ -220,8 +220,41 @@ struct RecipeDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    // Action pour le menu
+                Menu {
+                    Button {
+                        showingShareSheet = true
+                    } label: {
+                        Label("Partager", systemImage: "square.and.arrow.up")
+                    }
+                    
+                    Button {
+                        showingFolderPicker = true
+                    } label: {
+                        Label("Ajouter à un dossier", systemImage: "folder.badge.plus")
+                    }
+                    
+                    Divider()
+                    
+                    Button {
+                        if profileManager.isFavorite(recipe) {
+                            profileManager.removeFavoriteRecipe(recipe)
+                        } else {
+                            profileManager.addFavoriteRecipe(recipe)
+                        }
+                    } label: {
+                        Label(
+                            profileManager.isFavorite(recipe) ? "Retirer des favoris" : "Ajouter aux favoris",
+                            systemImage: profileManager.isFavorite(recipe) ? "heart.slash" : "heart"
+                        )
+                    }
+                    
+                    Divider()
+                    
+                    Button(role: .destructive) {
+                        // Action pour signaler un problème
+                    } label: {
+                        Label("Signaler un problème", systemImage: "exclamationmark.triangle")
+                    }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 16, weight: .semibold))
@@ -376,74 +409,179 @@ struct FolderPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingNewFolderSheet = false
     @State private var newFolderTitle = ""
-    @State private var selectedIcon = "folder"
-    
-    private let availableIcons = [
-        "folder", "folder.fill", "figure.run", "snowflake", "leaf.fill",
-        "flame", "moon.stars", "sun.max", "heart.fill", "star.fill"
-    ]
+    @State private var selectedIconOption: FolderIconOption = FolderIconOption.allOptions[0]
     
     var body: some View {
         NavigationStack {
-            List {
-                if !dataManager.folders.isEmpty {
-                    Section("Dossiers existants") {
-                        ForEach(dataManager.folders) { folder in
+            ZStack {
+                AuthBackground().ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        if !dataManager.folders.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Dossiers existants")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 20)
+                                
+                                VStack(spacing: 12) {
+                                    ForEach(dataManager.folders) { folder in
+                                        Button {
+                                            addToFolder(folder)
+                                        } label: {
+                                            HStack(spacing: 14) {
+                                                // Logo coloré
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(folder.color.gradient)
+                                                        .frame(width: 50, height: 50)
+                                                    
+                                                    Image(systemName: folder.imageName)
+                                                        .font(.system(size: 22, weight: .semibold))
+                                                        .foregroundStyle(.white)
+                                                }
+                                                
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(folder.title)
+                                                        .font(.body.weight(.medium))
+                                                        .foregroundStyle(.primary)
+                                                    
+                                                    Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
+                                                        .font(.caption)
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                                
+                                                Spacer()
+                                                
+                                                if folder.recipes.contains(recipe) {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .font(.title2)
+                                                        .foregroundStyle(
+                                                            LinearGradient(
+                                                                colors: [
+                                                                    Color(red: 0.3, green: 0.7, blue: 0.4),
+                                                                    Color(red: 0.2, green: 0.6, blue: 0.5)
+                                                                ],
+                                                                startPoint: .topLeading,
+                                                                endPoint: .bottomTrailing
+                                                            )
+                                                        )
+                                                } else {
+                                                    Image(systemName: "circle")
+                                                        .font(.title2)
+                                                        .foregroundStyle(.tertiary)
+                                                }
+                                            }
+                                            .padding(16)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                    .fill(.ultraThinMaterial)
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                    .stroke(
+                                                        folder.recipes.contains(recipe) ? 
+                                                        LinearGradient(
+                                                            colors: [
+                                                                Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.5),
+                                                                Color(red: 0.2, green: 0.6, blue: 0.5).opacity(0.3)
+                                                            ],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        ) :
+                                                        LinearGradient(
+                                                            colors: [.clear, .clear],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        ),
+                                                        lineWidth: 2
+                                                    )
+                                            )
+                                            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                            }
+                        }
+                        
+                        // Bouton créer un nouveau dossier
+                        VStack(alignment: .leading, spacing: 12) {
+                            if !dataManager.folders.isEmpty {
+                                Text("Nouveau dossier")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 20)
+                            }
+                            
                             Button {
-                                addToFolder(folder)
+                                showingNewFolderSheet = true
                             } label: {
                                 HStack(spacing: 12) {
-                                    Image(systemName: folder.imageName)
-                                        .font(.title3)
-                                        .foregroundStyle(folderColor(for: folder))
-                                        .frame(width: 32)
+                                    ZStack {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color(red: 0.3, green: 0.7, blue: 0.4),
+                                                        Color(red: 0.2, green: 0.6, blue: 0.5)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 50, height: 50)
+                                        
+                                        Image(systemName: "plus")
+                                            .font(.system(size: 22, weight: .semibold))
+                                            .foregroundStyle(.white)
+                                    }
                                     
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(folder.title)
-                                            .font(.body)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Créer un nouveau dossier")
+                                            .font(.body.weight(.medium))
                                             .foregroundStyle(.primary)
                                         
-                                        Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
+                                        Text("Organiser vos recettes")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
                                     
                                     Spacer()
                                     
-                                    if folder.recipes.contains(recipe) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .font(.title3)
-                                            .foregroundStyle(.green)
-                                    }
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(.tertiary)
                                 }
-                            }
-                        }
-                    }
-                }
-                
-                Section {
-                    Button {
-                        showingNewFolderSheet = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title3)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 0.4, green: 0.7, blue: 0.4),
-                                            Color(red: 0.3, green: 0.6, blue: 0.5)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+                                .padding(16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .fill(.ultraThinMaterial)
                                 )
-                            
-                            Text("Créer un nouveau dossier")
-                                .font(.body)
-                                .foregroundStyle(.primary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.3),
+                                                    Color(red: 0.2, green: 0.6, blue: 0.5).opacity(0.2)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1.5
+                                        )
+                                )
+                                .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.15), radius: 12, x: 0, y: 6)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 20)
                         }
+                        .padding(.top, 8)
                     }
+                    .padding(.vertical, 20)
                 }
             }
             .navigationTitle("Ajouter à un dossier")
@@ -457,19 +595,129 @@ struct FolderPickerView: View {
             }
             .sheet(isPresented: $showingNewFolderSheet) {
                 NavigationStack {
-                    Form {
-                        Section("Informations du dossier") {
-                            TextField("Nom du dossier", text: $newFolderTitle)
-                            
-                            Picker("Icône", selection: $selectedIcon) {
-                                ForEach(availableIcons, id: \.self) { icon in
-                                    HStack {
-                                        Image(systemName: icon)
-                                        Text(icon)
+                    ZStack {
+                        AuthBackground().ignoresSafeArea()
+                        
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 24) {
+                                // Aperçu du dossier
+                                VStack(spacing: 16) {
+                                    Text("Aperçu")
+                                        .font(.headline)
+                                        .foregroundStyle(.secondary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    HStack(spacing: 14) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(selectedIconOption.color.gradient)
+                                                .frame(width: 56, height: 56)
+                                            
+                                            Image(systemName: selectedIconOption.systemImage)
+                                                .font(.system(size: 26, weight: .semibold))
+                                                .foregroundStyle(.white)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(newFolderTitle.isEmpty ? "Mon dossier" : newFolderTitle)
+                                                .font(.title3.weight(.semibold))
+                                            
+                                            Text("0 recette")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        
+                                        Spacer()
                                     }
-                                    .tag(icon)
+                                    .padding(16)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .fill(.ultraThinMaterial)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .stroke(.white.opacity(0.2), lineWidth: 1)
+                                    )
                                 }
+                                .padding(.horizontal, 20)
+                                .padding(.top, 8)
+                                
+                                // Nom du dossier
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Nom du dossier")
+                                        .font(.headline)
+                                        .foregroundStyle(.secondary)
+                                    
+                                    TextField("Ex: Recettes d'été", text: $newFolderTitle)
+                                        .textFieldStyle(.plain)
+                                        .padding(14)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .fill(.ultraThinMaterial)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .stroke(selectedIconOption.color.opacity(0.3), lineWidth: 1)
+                                        )
+                                }
+                                .padding(.horizontal, 20)
+                                
+                                // Sélection d'icône
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Choisir une icône")
+                                        .font(.headline)
+                                        .foregroundStyle(.secondary)
+                                    
+                                    LazyVGrid(columns: [
+                                        GridItem(.flexible(), spacing: 12),
+                                        GridItem(.flexible(), spacing: 12),
+                                        GridItem(.flexible(), spacing: 12),
+                                        GridItem(.flexible(), spacing: 12)
+                                    ], spacing: 12) {
+                                        ForEach(FolderIconOption.allOptions) { option in
+                                            iconButton(for: option)
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 100)
                             }
+                        }
+                        
+                        // Bouton de création fixe en bas
+                        VStack {
+                            Spacer()
+                            
+                            Button {
+                                createFolderAndAdd()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "folder.badge.plus")
+                                        .font(.system(size: 18, weight: .semibold))
+                                    
+                                    Text("Créer et ajouter")
+                                        .font(.headline)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.3, green: 0.7, blue: 0.4),
+                                            Color(red: 0.2, green: 0.6, blue: 0.5)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .foregroundStyle(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.3), radius: 12, x: 0, y: 6)
+                            }
+                            .disabled(newFolderTitle.isEmpty)
+                            .opacity(newFolderTitle.isEmpty ? 0.5 : 1.0)
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
                         }
                     }
                     .navigationTitle("Nouveau dossier")
@@ -481,18 +729,52 @@ struct FolderPickerView: View {
                                 resetForm()
                             }
                         }
-                        
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Créer et ajouter") {
-                                createFolderAndAdd()
-                            }
-                            .disabled(newFolderTitle.isEmpty)
-                        }
                     }
                 }
-                .presentationDetents([.medium])
+                .presentationDetents([.large])
             }
         }
+    }
+    
+    @ViewBuilder
+    private func iconButton(for option: FolderIconOption) -> some View {
+        let isSelected = selectedIconOption.id == option.id
+        
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedIconOption = option
+            }
+        } label: {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(option.color.gradient)
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: option.systemImage)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                
+                Text(option.name)
+                    .font(.caption2)
+                    .foregroundStyle(isSelected ? option.color : .secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSelected ? option.color.opacity(0.15) : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(isSelected ? option.color : Color.clear, lineWidth: 2)
+            )
+            .scaleEffect(isSelected ? 1.05 : 1.0)
+        }
+        .buttonStyle(.plain)
     }
     
     private func addToFolder(_ folder: RecipeFolder) {
@@ -508,7 +790,8 @@ struct FolderPickerView: View {
     private func createFolderAndAdd() {
         let newFolder = RecipeFolder(
             title: newFolderTitle,
-            imageName: selectedIcon
+            imageName: selectedIconOption.systemImage,
+            colorHex: selectedIconOption.colorHex
         )
         dataManager.addFolder(newFolder)
         dataManager.addRecipe(recipe, to: newFolder)
@@ -520,7 +803,7 @@ struct FolderPickerView: View {
     
     private func resetForm() {
         newFolderTitle = ""
-        selectedIcon = "folder"
+        selectedIconOption = FolderIconOption.allOptions[0]
     }
     
     // Couleur basée sur l'icône du dossier (même logique que CompactFolderButton)

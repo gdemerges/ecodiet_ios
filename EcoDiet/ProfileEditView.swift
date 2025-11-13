@@ -15,7 +15,8 @@ struct ProfileEditView: View {
     @State private var showingAllergyAlert = false
     
     let availableDietaryPreferences = [
-        "Végétarien", "Végétalien", "Sans gluten", "Bio", "Local", 
+        "Végétarien", "Vegan", "Flexitarien", "Omnivore", 
+        "Sans gluten", "Bio", "Local", 
         "Faible en sel", "Faible en sucre", "Keto", "Paleo"
     ]
     

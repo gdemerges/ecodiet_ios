@@ -232,7 +232,7 @@ struct SignupFlowView: View {
 
                 LazyVGrid(columns: columns, spacing: 16) {
                     preferenceCard(title: "Végétarien", systemImage: "leaf", isOn: $isVegetarian)
-                    preferenceCard(title: "Végan", systemImage: "leaf.circle", isOn: $isVegan)
+                    preferenceCard(title: "Vegan", systemImage: "leaf.circle", isOn: $isVegan)
                     preferenceCard(title: "Flexitarien", systemImage: "fork.knife", isOn: $isFlexitarian)
                     preferenceCard(title: "Omnivore", systemImage: "pawprint.fill", isOn: $isOmnivore)
                 }
@@ -243,7 +243,7 @@ struct SignupFlowView: View {
                         // Convert UserPreferences to dietary preferences array
                         var dietaryPreferences: [String] = []
                         if isVegetarian { dietaryPreferences.append("Végétarien") }
-                        if isVegan { dietaryPreferences.append("Végan") }
+                        if isVegan { dietaryPreferences.append("Vegan") }
                         if isFlexitarian { dietaryPreferences.append("Flexitarien") }
                         if isOmnivore { dietaryPreferences.append("Omnivore") }
 

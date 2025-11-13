@@ -1,5 +1,24 @@
 import Foundation
+import SwiftUI
 import SwiftData
+
+// Extension pour les couleurs hex
+extension Color {
+    init?(hex: String) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+        
+        var rgb: UInt64 = 0
+        
+        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
+        
+        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
+        let g = Double((rgb & 0x00FF00) >> 8) / 255.0
+        let b = Double(rgb & 0x0000FF) / 255.0
+        
+        self.init(red: r, green: g, blue: b)
+    }
+}
 
 @Model
 final class Recipe: Identifiable, Hashable {
@@ -118,6 +137,7 @@ final class RecipeFolder: Identifiable, Hashable {
     @Attribute(.unique) var id: UUID
     var title: String
     var imageName: String
+    var colorHex: String // Couleur de fond du logo en hex
     var timestamp: Date
     
     // Relations
@@ -127,12 +147,18 @@ final class RecipeFolder: Identifiable, Hashable {
     // Lien avec l'utilisateur propriétaire
     var owner: UserProfile?
     
-    init(title: String, imageName: String = "folder", owner: UserProfile? = nil) {
+    init(title: String, imageName: String = "folder", colorHex: String = "#3B82F6", owner: UserProfile? = nil) {
         self.id = UUID()
         self.title = title
         self.imageName = imageName
+        self.colorHex = colorHex
         self.timestamp = Date()
         self.owner = owner
+    }
+    
+    // Couleur SwiftUI dérivée du hex
+    var color: Color {
+        Color(hex: colorHex) ?? Color.blue
     }
     
     // Pour la compatibilité Hashable

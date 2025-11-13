@@ -62,6 +62,59 @@ class SwiftDataManager {
         
         // Charger uniquement les dossiers de l'utilisateur actuel
         folders = profile.folders.sorted { $0.timestamp > $1.timestamp }
+        
+        // Migration: Ajouter des couleurs par défaut aux anciens dossiers
+        migrateFolderColors()
+    }
+    
+    private func migrateFolderColors() {
+        var needsSave = false
+        
+        for folder in folders {
+            // Si le dossier n'a pas de couleur (ancien format), lui en assigner une
+            if folder.colorHex.isEmpty || folder.colorHex == "#000000" {
+                // Assigner une couleur basée sur l'icône
+                let defaultColor = getDefaultColorForIcon(folder.imageName)
+                folder.colorHex = defaultColor
+                needsSave = true
+            }
+        }
+        
+        if needsSave {
+            do {
+                try modelContext.save()
+            } catch {
+                print("Erreur lors de la migration des couleurs des dossiers: \(error)")
+            }
+        }
+    }
+    
+    private func getDefaultColorForIcon(_ iconName: String) -> String {
+        // Retourner une couleur par défaut basée sur l'icône
+        switch iconName {
+        case "figure.run", "dumbbell.fill":
+            return "#EF4444" // Rouge pour sport
+        case "leaf.fill", "leaf", "carrot.fill", "leaf.circle.fill":
+            return "#10B981" // Vert pour végétarien/légumes
+        case "snowflake", "drop.fill":
+            return "#60A5FA" // Bleu pour hiver/eau
+        case "sun.max.fill", "sun.max":
+            return "#FBBF24" // Jaune pour été
+        case "flame.fill", "flame":
+            return "#F97316" // Orange pour viande/chaud
+        case "heart.fill", "heart":
+            return "#EC4899" // Rose pour favoris
+        case "star.fill", "star":
+            return "#FBBF24" // Jaune doré pour favoris
+        case "moon.stars.fill", "moon.stars":
+            return "#6366F1" // Indigo pour nuit
+        case "birthday.cake.fill", "gift.fill":
+            return "#F472B6" // Rose pour desserts/fêtes
+        case "fish.fill", "fish":
+            return "#0EA5E9" // Bleu ciel pour poisson
+        default:
+            return "#3B82F6" // Bleu par défaut
+        }
     }
     
     // MARK: - Création des données par défaut
@@ -137,9 +190,9 @@ class SwiftDataManager {
         guard let profile = userProfile else { return }
         
         let defaultFolders = [
-            RecipeFolder(title: "Recettes sport", imageName: "figure.run", owner: profile),
-            RecipeFolder(title: "Recettes hiver", imageName: "snowflake", owner: profile),
-            RecipeFolder(title: "Végétarien", imageName: "leaf.fill", owner: profile)
+            RecipeFolder(title: "Recettes sport", imageName: "figure.run", colorHex: "#EF4444", owner: profile),
+            RecipeFolder(title: "Recettes hiver", imageName: "snowflake", colorHex: "#60A5FA", owner: profile),
+            RecipeFolder(title: "Végétarien", imageName: "leaf.fill", colorHex: "#10B981", owner: profile)
         ]
         
         for folder in defaultFolders {
@@ -169,8 +222,9 @@ class SwiftDataManager {
         modelContext.insert(profile)
         userProfile = profile
         
-        // Créer les dossiers par défaut pour le nouveau profil
-        createDefaultFolders()
+        // Ne plus créer automatiquement les dossiers par défaut
+        // L'utilisateur devra les créer lui-même
+        folders = []
         
         do {
             try modelContext.save()
@@ -303,6 +357,48 @@ class SwiftDataManager {
     
     func folder(with id: UUID) -> RecipeFolder? {
         return folders.first { $0.id == id }
+    }
+    
+    // MARK: - Recommandations personnalisées
+    func getRecommendedRecipes() -> [Recipe] {
+        guard let profile = userProfile else {
+            return recipes
+        }
+        
+        let preferences = profile.dietaryPreferences
+        
+        // Si l'utilisateur n'a pas de préférences, retourner toutes les recettes
+        if preferences.isEmpty {
+            return recipes
+        }
+        
+        // Filtrer les recettes qui correspondent aux préférences alimentaires
+        return recipes.filter { recipe in
+            // Vérifier si la recette correspond à au moins une préférence de l'utilisateur
+            for preference in preferences {
+                if recipe.dietaryTags.contains(preference) {
+                    return true
+                }
+                
+                // Cas spéciaux
+                // Si l'utilisateur est vegan, il peut manger végétarien
+                if preference == "Vegan" && recipe.dietaryTags.contains("Végétarien") {
+                    return true
+                }
+                
+                // Si l'utilisateur est végétarien ou flexitarien, il peut manger végétarien
+                if (preference == "Végétarien" || preference == "Flexitarien") && 
+                   recipe.dietaryTags.contains("Végétarien") {
+                    return true
+                }
+                
+                // Si l'utilisateur est omnivore, il peut manger toutes les recettes sauf vegan strictes
+                if preference == "Omnivore" {
+                    return true
+                }
+            }
+            return false
+        }
     }
     
     // MARK: - Utilitaires

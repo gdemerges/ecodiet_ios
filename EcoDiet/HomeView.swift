@@ -88,9 +88,24 @@ struct HomeView: View {
 
                     if !dataManager.folders.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Mes dossiers")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(.primary)
+                            HStack(spacing: 8) {
+                                Image(systemName: "folder.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(red: 0.4, green: 0.6, blue: 0.9),
+                                                Color(red: 0.3, green: 0.5, blue: 0.8)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                
+                                Text("Mes dossiers")
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                            }
                             
                             // Grille de dossiers minimaliste
                             LazyVGrid(columns: [
@@ -130,7 +145,7 @@ struct HomeView: View {
                         }
                         Spacer()
                         NavigationLink {
-                            RecommendationView()
+                            RecommendationView(dataManager: dataManager, profileManager: profileManager)
                         } label: {
                             Text("Voir tout")
                                 .font(.subheadline.weight(.semibold))
@@ -267,9 +282,15 @@ struct FolderCard: View {
                         .fill(.ultraThinMaterial)
                         .frame(width: 240, height: 140)
                     VStack {
-                        Image(systemName: folder.imageName)
-                            .font(.system(size: 36, weight: .semibold))
-                            .foregroundStyle(.primary)
+                        ZStack {
+                            Circle()
+                                .fill(folder.color.gradient)
+                                .frame(width: 60, height: 60)
+                            
+                            Image(systemName: folder.imageName)
+                                .font(.system(size: 28, weight: .semibold))
+                                .foregroundStyle(.white)
+                        }
                         Text("\(folder.recipes.count)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -700,15 +721,16 @@ struct CompactFolderButton: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Icône simple à gauche
-            Image(systemName: folder.imageName)
-                .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 40, height: 40)
-                .background(
-                    Circle()
-                        .fill(Color.primary.opacity(0.05))
-                )
+            // Logo coloré
+            ZStack {
+                Circle()
+                    .fill(folder.color.gradient)
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: folder.imageName)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
             
             // Texte à gauche
             VStack(alignment: .leading, spacing: 2) {
