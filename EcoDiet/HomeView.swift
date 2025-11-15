@@ -87,72 +87,6 @@ struct HomeView: View {
                     }
                     .padding(.top, 8)
 
-                    // Section Mon frigo - Nouvelle fonctionnalité
-                    VStack(spacing: 12) {
-                        // Carte principale frigo
-                        NavigationLink {
-                            FridgeView(fridgeManager: fridgeManager)
-                        } label: {
-                            FridgeQuickAccessCard(fridgeManager: fridgeManager)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Carte recettes basées sur le frigo
-                        if !fridgeManager.ingredientsInFridge().isEmpty {
-                            NavigationLink {
-                                FridgeRecommendationsView(
-                                    dataManager: dataManager,
-                                    fridgeManager: fridgeManager,
-                                    profileManager: profileManager
-                                )
-                            } label: {
-                                FridgeRecipesQuickCard(
-                                    dataManager: dataManager,
-                                    fridgeManager: fridgeManager
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-
-                    if !dataManager.folders.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "folder.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [
-                                                Color(red: 0.4, green: 0.6, blue: 0.9),
-                                                Color(red: 0.3, green: 0.5, blue: 0.8)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                
-                                Text("Mes dossiers")
-                                    .font(.title3.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                            }
-                            
-                            // Grille de dossiers minimaliste
-                            LazyVGrid(columns: [
-                                GridItem(.flexible(), spacing: 12),
-                                GridItem(.flexible(), spacing: 12)
-                            ], spacing: 12) {
-                                ForEach(dataManager.folders) { folder in
-                                    NavigationLink {
-                                        FolderDetailView(folder: folder, dataManager: dataManager)
-                                    } label: {
-                                        CompactFolderButton(folder: folder)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                }
-                            }
-                        }
-                    }
-
                     HStack {
                         HStack(spacing: 8) {
                             Image(systemName: "sparkles")
@@ -349,139 +283,100 @@ struct FolderCard: View {
 
 struct RecipeCard: View {
     let recipe: Recipe
-    @State private var isAppearing = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ZStack(alignment: .topTrailing) {
-                // Fond avec gradient doux
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.95, green: 0.97, blue: 0.95),
-                                Color(red: 0.92, green: 0.95, blue: 0.92)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 240, height: 140)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 0.4, green: 0.7, blue: 0.4).opacity(0.3),
-                                        Color(red: 0.3, green: 0.6, blue: 0.5).opacity(0.2)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                    )
+        VStack(alignment: .leading, spacing: 14) {
+            ZStack {
+                // Fond neutre pour l'image
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color.primary.opacity(0.05))
+                    .frame(width: 240, height: 160)
                 
-                // Icône avec effet de profondeur
-                VStack {
-                    Spacer()
-                    Image(systemName: recipe.imageName)
-                        .font(.system(size: 42, weight: .medium))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.3, green: 0.6, blue: 0.4),
-                                    Color(red: 0.2, green: 0.5, blue: 0.5)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .shadow(color: Color(red: 0.3, green: 0.6, blue: 0.4).opacity(0.3), radius: 8, x: 0, y: 4)
-                        .scaleEffect(isAppearing ? 1.0 : 0.8)
-                        .rotationEffect(.degrees(isAppearing ? 0 : -10))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity)
+                // TODO: Image de la recette sera affichée ici
                 
-                // Badge temps de préparation (bas à droite)
+                // Badge temps en haut à droite
                 VStack {
-                    Spacer()
                     HStack {
                         Spacer()
-                        HStack(spacing: 4) {
+                        HStack(spacing: 3) {
                             Image(systemName: "clock.fill")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .font(.system(size: 9, weight: .bold))
                             
-                            Text("\(recipe.preparationTime) min")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.white)
+                            Text("\(recipe.preparationTime)'")
+                                .font(.system(size: 11, weight: .bold))
                         }
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
                         .background(
                             Capsule()
-                                .fill(.black.opacity(0.6))
+                                .fill(.black.opacity(0.5))
+                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                         )
-                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                        .padding(8)
                     }
-                }
-                
-                // Badge Eco-Score amélioré avec ombre
-                EcoScoreBadge(ecoScore: recipe.ecoScore, size: .small)
-                    .padding(10)
-                    .scaleEffect(isAppearing ? 1.0 : 0.5)
-                    .opacity(isAppearing ? 1.0 : 0.0)
-            }
-            .frame(width: 240, height: 140)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(recipe.title)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                
-                HStack {
-                    Text(recipe.subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                    
                     Spacer()
-                    
-                    // Emoji avec animation subtile
+                }
+                .padding(12)
+                .frame(width: 240, height: 160)
+                
+                // Badge Eco-Score en haut à gauche
+                VStack {
+                    HStack {
+                        EcoScoreBadge(ecoScore: recipe.ecoScore, size: .small)
+                            .scaleEffect(0.85)
+                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .padding(12)
+                .frame(width: 240, height: 160)
+            }
+            
+            VStack(alignment: .leading, spacing: 6) {
+                // Titre de la recette
+                Text(recipe.title)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                
+                HStack(spacing: 6) {
                     Text(recipe.ecoScore.emoji)
                         .font(.caption)
-                        .scaleEffect(isAppearing ? 1.0 : 0)
+                    
+                    Text(recipe.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
                 }
+                
+                Text("\(recipe.requiredIngredients.count) ingrédients")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+            .padding(.horizontal, 6)
         }
-        .padding(14)
+        .frame(width: 240)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .shadow(color: Color.black.opacity(0.08), radius: 16, x: 0, y: 8)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.5),
-                            Color.white.opacity(0.1)
+                            Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.4),
+                            Color(red: 0.2, green: 0.6, blue: 0.5).opacity(0.2)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 1
+                    lineWidth: 2
                 )
         )
-        .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
-                isAppearing = true
-            }
-        }
+        .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.2), radius: 20, x: 0, y: 10)
     }
 }
 
@@ -736,249 +631,6 @@ struct SportsQuizCard: View {
             withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
                 isAnimating = true
             }
-            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
-                pulseAnimation = true
-            }
-        }
-    }
-}
-
-// Bouton compact de dossier avec design minimaliste
-struct CompactFolderButton: View {
-    let folder: RecipeFolder
-    @State private var isPressed = false
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            // Logo coloré
-            ZStack {
-                Circle()
-                    .fill(folder.color.gradient)
-                    .frame(width: 40, height: 40)
-                
-                Image(systemName: folder.imageName)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            
-            // Texte à gauche
-            VStack(alignment: .leading, spacing: 2) {
-                Text(folder.title)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                
-                Text("\(folder.recipes.count) recette\(folder.recipes.count > 1 ? "s" : "")")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer(minLength: 0)
-            
-            // Chevron discret
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.tertiary)
-                .offset(x: isPressed ? 2 : 0)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.primary.opacity(0.03))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-        )
-        .scaleEffect(isPressed ? 0.98 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
-        .onLongPressGesture(minimumDuration: .infinity, maximumDistance: .infinity, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
-    }
-}
-
-// Carte d'accès rapide au frigo
-struct FridgeQuickAccessCard: View {
-    let fridgeManager: FridgeManager
-    @State private var isAnimating = false
-    
-    var ingredientsCount: Int {
-        fridgeManager.ingredientsInFridge().count
-    }
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            // Icône animée
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.4, green: 0.6, blue: 0.9),
-                                Color(red: 0.3, green: 0.5, blue: 0.8)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 70, height: 70)
-                
-                Image(systemName: "refrigerator.fill")
-                    .font(.system(size: 32, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .scaleEffect(isAnimating ? 1.05 : 1.0)
-            }
-            
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Mon frigo")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(.primary)
-                
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
-                    
-                    Text("\(ingredientsCount) ingrédient\(ingredientsCount > 1 ? "s" : "") disponible\(ingredientsCount > 1 ? "s" : "")")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Text("Gérer mes ingrédients")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.tertiary)
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.4, green: 0.6, blue: 0.9).opacity(0.4),
-                            Color(red: 0.3, green: 0.5, blue: 0.8).opacity(0.2)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 2
-                )
-        )
-        .shadow(color: Color(red: 0.4, green: 0.6, blue: 0.9).opacity(0.2), radius: 12, x: 0, y: 6)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                isAnimating = true
-            }
-        }
-    }
-}
-
-// Carte de recettes basées sur le frigo
-struct FridgeRecipesQuickCard: View {
-    let dataManager: SwiftDataManager
-    let fridgeManager: FridgeManager
-    @State private var pulseAnimation = false
-    
-    var availableRecipesCount: Int {
-        dataManager.recipes.filter { recipe in
-            fridgeManager.canMakeRecipe(recipe, allowMissing: 2)
-        }.count
-    }
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            // Icône avec gradient
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.3, green: 0.7, blue: 0.4),
-                                Color(red: 0.2, green: 0.6, blue: 0.5)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 70, height: 70)
-                    .scaleEffect(pulseAnimation ? 1.05 : 1.0)
-                    .opacity(pulseAnimation ? 0.9 : 1.0)
-                
-                VStack(spacing: 2) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(.white)
-                    
-                    Text("\(availableRecipesCount)")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Recettes possibles")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(.primary)
-                
-                Text("Basé sur vos ingrédients")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                
-                if availableRecipesCount > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.caption2)
-                        
-                        Text("\(availableRecipesCount) recette\(availableRecipesCount > 1 ? "s" : "") disponible\(availableRecipesCount > 1 ? "s" : "")")
-                            .font(.caption2.weight(.medium))
-                    }
-                    .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
-                } else {
-                    Text("Ajoutez des ingrédients")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.tertiary)
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.4),
-                            Color(red: 0.2, green: 0.6, blue: 0.5).opacity(0.2)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 2
-                )
-        )
-        .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.2), radius: 12, x: 0, y: 6)
-        .onAppear {
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
                 pulseAnimation = true
             }

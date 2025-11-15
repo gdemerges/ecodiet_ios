@@ -4,6 +4,27 @@
 //
 //  Created by Guillaume Demergès on 30/10/2025.
 //
+//  SYSTÈME D'AUTHENTIFICATION AVEC PROFILS HARDCODÉS
+//  ==================================================
+//
+//  Ce fichier utilise des profils hardcodés pour l'authentification en attendant
+//  l'intégration avec PostgreSQL.
+//
+//  COMPTES DE TEST DISPONIBLES:
+//  - demo@ecodiet.com / demo123 (Utilisateur standard)
+//  - veggie@ecodiet.com / veggie123 (Végétarien)
+//  - sport@ecodiet.com / sport123 (Sportif)
+//  - allergic@ecodiet.com / allergic123 (Avec allergies)
+//  - vegan@ecodiet.com / vegan123 (Vegan)
+//
+//  FONCTIONNALITÉS:
+//  - Authentification via AuthenticationManager
+//  - Synchronisation automatique avec SwiftData
+//  - Liste des comptes de test dans l'interface
+//  - Geste secret (shake) pour afficher les comptes après connexion
+//
+//  TODO: Migrer vers PostgreSQL (voir HARDCODED_PROFILES_README.md)
+//
 
 import SwiftUI
 import SwiftData
@@ -12,6 +33,7 @@ struct ContentView: View {
     @State private var isAuthenticated = false
     @State private var isPresentingSignup = false
     @State private var profileManager = UserProfileManager()
+    @State private var authManager = AuthenticationManager()
     @State private var dataManager: SwiftDataManager?
     @State private var fridgeManager: FridgeManager?
     
@@ -22,16 +44,16 @@ struct ContentView: View {
             Group {
                 if let dataManager = dataManager, let fridgeManager = fridgeManager {
                     if isAuthenticated {
-                        NavigationStack {
-                            HomeView(
-                                dataManager: dataManager,
-                                profileManager: profileManager,
-                                fridgeManager: fridgeManager,
-                                isAuthenticated: $isAuthenticated
-                            )
-                        }
+                        MainTabView(
+                            dataManager: dataManager,
+                            profileManager: profileManager,
+                            fridgeManager: fridgeManager,
+                            isAuthenticated: $isAuthenticated
+                        )
                     } else {
                         LoginView(
+                            authManager: authManager,
+                            profileManager: profileManager,
                             isAuthenticated: $isAuthenticated,
                             onSignup: { isPresentingSignup = true }
                         )
@@ -76,4 +98,3 @@ struct ContentView: View {
     ContentView()
         .modelContainer(for: [Recipe.self, RecipeFolder.self, UserProfile.self], inMemory: true)
 }
-

@@ -142,8 +142,8 @@ struct ProfileEditView: View {
     @ViewBuilder
     private var selectedPreferencesView: some View {
         if !dietaryPreferences.isEmpty {
-            FlowLayout(spacing: 8) {
-                ForEach(dietaryPreferences, id: \.self) { preference in
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(dietaryPreferences.enumerated()), id: \.element) { index, preference in
                     TagView(
                         text: preference,
                         isSelected: true,
@@ -162,7 +162,7 @@ struct ProfileEditView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             
-            FlowLayout(spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(availableDietaryPreferences.filter { !dietaryPreferences.contains($0) }, id: \.self) { preference in
                     TagView(
                         text: preference,
@@ -202,8 +202,8 @@ struct ProfileEditView: View {
     @ViewBuilder
     private var selectedAllergiesView: some View {
         if !allergies.isEmpty {
-            FlowLayout(spacing: 8) {
-                ForEach(allergies, id: \.self) { allergy in
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(allergies.enumerated()), id: \.element) { index, allergy in
                     TagView(
                         text: allergy,
                         isSelected: true,
@@ -223,7 +223,7 @@ struct ProfileEditView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             
-            FlowLayout(spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(commonAllergies.filter { !allergies.contains($0) }, id: \.self) { allergy in
                     TagView(
                         text: allergy,
@@ -278,13 +278,16 @@ struct ProfileEditView: View {
     }
     
     private func saveProfile() {
-        profileManager.updateProfile(
-            name: name,
-            email: email,
-            cookingLevel: selectedCookingLevel,
-            dietaryPreferences: dietaryPreferences,
-            allergies: allergies
-        )
+        guard let currentProfile = profileManager.userProfile else { return }
+        
+        // Update the existing profile's properties
+        currentProfile.name = name
+        currentProfile.email = email
+        currentProfile.cookingLevel = selectedCookingLevel
+        currentProfile.dietaryPreferences = dietaryPreferences
+        currentProfile.allergies = allergies
+        
+        profileManager.updateProfile(currentProfile)
         dismiss()
     }
 }

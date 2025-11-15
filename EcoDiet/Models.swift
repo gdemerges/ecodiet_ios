@@ -210,6 +210,13 @@ final class UserProfile {
     var cookingLevel: CookingLevel
     var joinDate: Date
     
+    // Propriétés pour les profils hardcodés (en attendant PostgreSQL)
+    var age: Int = 0
+    var height: Double = 0.0 // en cm
+    var weight: Double = 0.0 // en kg
+    var activityLevel: String = "" // Niveau d'activité physique
+    var healthGoals: [String] = [] // Objectifs de santé
+    
     // Relations
     @Relationship(deleteRule: .nullify, inverse: \Recipe.userProfiles)
     var favoriteRecipes: [Recipe] = []

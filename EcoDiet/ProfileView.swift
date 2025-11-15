@@ -110,23 +110,6 @@ struct ProfileView: View {
                                         icon: "exclamationmark.triangle"
                                     )
                                 }
-                                
-                                NavigationLink {
-                                    ProfileEditView(profileManager: profileManager)
-                                } label: {
-                                    HStack {
-                                        Text("Modifier les préférences")
-                                            .font(.subheadline.weight(.medium))
-                                            .foregroundStyle(.primary)
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 12)
-                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                                }
                             }
                             .padding(.horizontal, 24)
                         }
@@ -134,11 +117,33 @@ struct ProfileView: View {
                     
                     // Actions du profil
                     VStack(spacing: 12) {
-                        ProfileActionButton(
-                            title: "Paramètres du compte",
-                            icon: "gearshape.fill",
-                            action: { }
-                        )
+                        NavigationLink {
+                            ProfileEditView(profileManager: profileManager)
+                        } label: {
+                            HStack {
+                                Image(systemName: "pencil.circle.fill")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundStyle(.primary)
+                                
+                                Text("Modifier les préférences")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(.primary)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(.white.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                         
                         ProfileActionButton(
                             title: "Aide et support",
