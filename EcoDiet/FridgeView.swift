@@ -231,6 +231,9 @@ struct FridgeView: View {
         .navigationTitle("Mon frigo")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingAddIngredient) {
+            // Callback après fermeture du sheet
+            fridgeManager.loadIngredients()
+        } content: {
             AddIngredientView(fridgeManager: fridgeManager)
         }
         .onAppear {

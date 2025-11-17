@@ -17,8 +17,9 @@ class FridgeManager {
         )
         
         do {
-            ingredients = try modelContext.fetch(descriptor)
-            print("✅ Ingrédients chargés: \(ingredients.count)")
+            let fetchedIngredients = try modelContext.fetch(descriptor)
+            // Important: mettre à jour la propriété pour déclencher la mise à jour de l'UI
+            ingredients = fetchedIngredients
         } catch {
             print("❌ Erreur lors du chargement des ingrédients: \(error)")
             ingredients = []
@@ -31,7 +32,6 @@ class FridgeManager {
         // Sauvegarder immédiatement
         do {
             try modelContext.save()
-            print("✅ Ingrédient sauvegardé: \(ingredient.name)")
         } catch {
             print("❌ Erreur lors de la sauvegarde de l'ingrédient: \(error)")
         }
@@ -46,7 +46,6 @@ class FridgeManager {
         // Sauvegarder immédiatement
         do {
             try modelContext.save()
-            print("✅ Ingrédient supprimé: \(ingredient.name)")
         } catch {
             print("❌ Erreur lors de la suppression de l'ingrédient: \(error)")
         }
@@ -59,7 +58,6 @@ class FridgeManager {
         // Sauvegarder immédiatement
         do {
             try modelContext.save()
-            print("✅ Ingrédient mis à jour: \(ingredient.name)")
         } catch {
             print("❌ Erreur lors de la mise à jour de l'ingrédient: \(error)")
         }
@@ -74,7 +72,6 @@ class FridgeManager {
         // Sauvegarder immédiatement
         do {
             try modelContext.save()
-            print("✅ Statut frigo mis à jour pour: \(ingredient.name) -> \(ingredient.isInFridge)")
         } catch {
             print("❌ Erreur lors de la mise à jour du statut: \(error)")
         }

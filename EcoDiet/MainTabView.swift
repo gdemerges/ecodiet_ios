@@ -311,25 +311,35 @@ struct FridgeTabView: View {
                         }
                     }
                     
-                    // Liste des ingrédients
-                    NavigationLink {
-                        FridgeView(fridgeManager: fridgeManager)
-                    } label: {
-                        HStack {
-                            Text("Tous mes ingrédients")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(.primary)
+                    // Liste des ingrédients dans le frigo
+                    if ingredientsCount > 0 {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 8) {
+                                Text("Mes ingrédients")
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                
+                                Spacer()
+                                
+                                NavigationLink {
+                                    FridgeView(fridgeManager: fridgeManager)
+                                } label: {
+                                    Text("Tout voir")
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(Color(red: 0.4, green: 0.6, blue: 0.9))
+                                }
+                            }
+                            .padding(.horizontal, 24)
                             
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            VStack(spacing: 10) {
+                                ForEach(fridgeManager.ingredientsInFridge().prefix(5)) { ingredient in
+                                    IngredientRow(ingredient: ingredient, fridgeManager: fridgeManager)
+                                        .padding(.horizontal, 24)
+                                }
+                            }
                         }
-                        .padding(.horizontal, 24)
-                    }
-                    
-                    if ingredientsCount == 0 {
+                    } else {
+                        // Message si frigo vide
                         VStack(spacing: 16) {
                             Image(systemName: "refrigerator")
                                 .font(.system(size: 60))
