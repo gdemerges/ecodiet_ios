@@ -233,6 +233,10 @@ struct FridgeView: View {
         .sheet(isPresented: $showingAddIngredient) {
             AddIngredientView(fridgeManager: fridgeManager)
         }
+        .onAppear {
+            // Rafraîchir la liste des ingrédients quand la vue apparaît
+            fridgeManager.loadIngredients()
+        }
     }
 }
 

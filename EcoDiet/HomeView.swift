@@ -234,10 +234,11 @@ struct HomeView: View {
 struct FolderCard: View {
     let folder: RecipeFolder
     let dataManager: SwiftDataManager
+    let profileManager: UserProfileManager
     
     var body: some View {
         NavigationLink {
-            FolderDetailView(folder: folder, dataManager: dataManager)
+            FolderDetailView(folder: folder, dataManager: dataManager, profileManager: profileManager)
         } label: {
             VStack(alignment: .leading, spacing: 8) {
                 ZStack {

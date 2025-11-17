@@ -54,7 +54,7 @@ struct ProfileView: View {
                                 VStack(spacing: 12) {
                                     ForEach(dataManager.folders.prefix(3)) { folder in
                                         NavigationLink {
-                                            FolderDetailView(folder: folder, dataManager: dataManager)
+                                            FolderDetailView(folder: folder, dataManager: dataManager, profileManager: profileManager)
                                         } label: {
                                             ProfileFolderRow(folder: folder)
                                         }
@@ -63,7 +63,7 @@ struct ProfileView: View {
                                     
                                     if dataManager.folders.count > 3 {
                                         NavigationLink {
-                                            FoldersView(dataManager: dataManager)
+                                            FoldersView(dataManager: dataManager, profileManager: profileManager)
                                         } label: {
                                             HStack {
                                                 Text("Voir tous les dossiers (\(dataManager.folders.count))")

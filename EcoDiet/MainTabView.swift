@@ -24,7 +24,7 @@ struct MainTabView: View {
             
             // Onglet Dossiers
             NavigationStack {
-                FoldersTabView(dataManager: dataManager)
+                FoldersTabView(dataManager: dataManager, profileManager: profileManager)
             }
             .tabItem {
                 Label("Dossiers", systemImage: "folder.fill")
@@ -49,6 +49,7 @@ struct MainTabView: View {
 // MARK: - Folders Tab View
 struct FoldersTabView: View {
     let dataManager: SwiftDataManager
+    let profileManager: UserProfileManager
     @State private var showingCreateFolder = false
     
     var body: some View {
@@ -144,7 +145,7 @@ struct FoldersTabView: View {
                         LazyVStack(spacing: 12) {
                             ForEach(dataManager.folders) { folder in
                                 NavigationLink {
-                                    FolderDetailView(folder: folder, dataManager: dataManager)
+                                    FolderDetailView(folder: folder, dataManager: dataManager, profileManager: profileManager)
                                 } label: {
                                     FolderRowCard(folder: folder)
                                 }
@@ -353,6 +354,10 @@ struct FridgeTabView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingAddIngredient) {
             AddIngredientView(fridgeManager: fridgeManager)
+        }
+        .onAppear {
+            // Rafraîchir la liste des ingrédients quand la vue apparaît
+            fridgeManager.loadIngredients()
         }
     }
 }

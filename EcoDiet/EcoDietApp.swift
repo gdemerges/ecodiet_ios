@@ -14,7 +14,8 @@ struct EcoDietApp: App {
         let schema = Schema([
             Recipe.self,
             RecipeFolder.self,
-            UserProfile.self
+            UserProfile.self,
+            Ingredient.self  // ✅ AJOUT : Nécessaire pour persister les ingrédients
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

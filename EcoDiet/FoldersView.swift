@@ -3,6 +3,7 @@ import SwiftData
 
 struct FoldersView: View {
     let dataManager: SwiftDataManager
+    let profileManager: UserProfileManager
     @State private var showingAddFolder = false
     @State private var newFolderTitle = ""
     @State private var selectedIconOption: FolderIconOption = FolderIconOption.allOptions[0]
@@ -12,7 +13,7 @@ struct FoldersView: View {
             List {
                 ForEach(dataManager.folders) { folder in
                     NavigationLink {
-                        FolderDetailView(folder: folder, dataManager: dataManager)
+                        FolderDetailView(folder: folder, dataManager: dataManager, profileManager: profileManager)
                     } label: {
                         HStack(spacing: 14) {
                             // Logo coloré
@@ -260,5 +261,7 @@ struct FoldersView: View {
     let container = try! ModelContainer(for: schema, configurations: [config])
     let context = ModelContext(container)
     let manager = SwiftDataManager(modelContext: context)
-    return FoldersView(dataManager: manager)
+    let profileManager = UserProfileManager()
+    profileManager.configure(with: manager)
+    return FoldersView(dataManager: manager, profileManager: profileManager)
 }

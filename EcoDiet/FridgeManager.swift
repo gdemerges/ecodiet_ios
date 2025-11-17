@@ -18,32 +18,68 @@ class FridgeManager {
         
         do {
             ingredients = try modelContext.fetch(descriptor)
+            print("✅ Ingrédients chargés: \(ingredients.count)")
         } catch {
-            print("Erreur lors du chargement des ingrédients: \(error)")
+            print("❌ Erreur lors du chargement des ingrédients: \(error)")
             ingredients = []
         }
     }
     
     func addIngredient(_ ingredient: Ingredient) {
         modelContext.insert(ingredient)
-        saveContext()
+        
+        // Sauvegarder immédiatement
+        do {
+            try modelContext.save()
+            print("✅ Ingrédient sauvegardé: \(ingredient.name)")
+        } catch {
+            print("❌ Erreur lors de la sauvegarde de l'ingrédient: \(error)")
+        }
+        
+        // Recharger pour mettre à jour la liste
         loadIngredients()
     }
     
     func removeIngredient(_ ingredient: Ingredient) {
         modelContext.delete(ingredient)
-        saveContext()
+        
+        // Sauvegarder immédiatement
+        do {
+            try modelContext.save()
+            print("✅ Ingrédient supprimé: \(ingredient.name)")
+        } catch {
+            print("❌ Erreur lors de la suppression de l'ingrédient: \(error)")
+        }
+        
+        // Recharger pour mettre à jour la liste
         loadIngredients()
     }
     
     func updateIngredient(_ ingredient: Ingredient) {
-        saveContext()
+        // Sauvegarder immédiatement
+        do {
+            try modelContext.save()
+            print("✅ Ingrédient mis à jour: \(ingredient.name)")
+        } catch {
+            print("❌ Erreur lors de la mise à jour de l'ingrédient: \(error)")
+        }
+        
+        // Recharger pour mettre à jour la liste
         loadIngredients()
     }
     
     func toggleFridgeStatus(_ ingredient: Ingredient) {
         ingredient.isInFridge.toggle()
-        saveContext()
+        
+        // Sauvegarder immédiatement
+        do {
+            try modelContext.save()
+            print("✅ Statut frigo mis à jour pour: \(ingredient.name) -> \(ingredient.isInFridge)")
+        } catch {
+            print("❌ Erreur lors de la mise à jour du statut: \(error)")
+        }
+        
+        // Recharger pour mettre à jour la liste
         loadIngredients()
     }
     
@@ -124,13 +160,5 @@ class FridgeManager {
             Ingredient(name: "Graines de tournesol", category: .other, unit: .gram, imageName: "circle.fill"),
             Ingredient(name: "Bouillon de légumes", category: .other, unit: .milliliter, imageName: "drop.fill")
         ]
-    }
-    
-    private func saveContext() {
-        do {
-            try modelContext.save()
-        } catch {
-            print("Erreur lors de la sauvegarde: \(error)")
-        }
     }
 }

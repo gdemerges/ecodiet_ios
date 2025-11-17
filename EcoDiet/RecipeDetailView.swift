@@ -410,6 +410,8 @@ struct FolderPickerView: View {
     @State private var showingNewFolderSheet = false
     @State private var newFolderTitle = ""
     @State private var selectedIconOption: FolderIconOption = FolderIconOption.allOptions[0]
+    @State private var selectedFolders: Set<RecipeFolder> = []
+    @State private var hasChanges = false
     
     var body: some View {
         NavigationStack {
@@ -428,7 +430,7 @@ struct FolderPickerView: View {
                                 VStack(spacing: 12) {
                                     ForEach(dataManager.folders) { folder in
                                         Button {
-                                            addToFolder(folder)
+                                            toggleFolder(folder)
                                         } label: {
                                             HStack(spacing: 14) {
                                                 // Logo coloré
@@ -454,7 +456,7 @@ struct FolderPickerView: View {
                                                 
                                                 Spacer()
                                                 
-                                                if folder.recipes.contains(recipe) {
+                                                if selectedFolders.contains(folder) {
                                                     Image(systemName: "checkmark.circle.fill")
                                                         .font(.title2)
                                                         .foregroundStyle(
@@ -481,7 +483,7 @@ struct FolderPickerView: View {
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                                                     .stroke(
-                                                        folder.recipes.contains(recipe) ? 
+                                                        selectedFolders.contains(folder) ? 
                                                         LinearGradient(
                                                             colors: [
                                                                 Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.5),
@@ -582,6 +584,44 @@ struct FolderPickerView: View {
                         .padding(.top, 8)
                     }
                     .padding(.vertical, 20)
+                    .padding(.bottom, hasChanges ? 80 : 0)
+                }
+                
+                // Bouton de validation fixe en bas
+                if hasChanges {
+                    VStack {
+                        Spacer()
+                        
+                        Button {
+                            saveChanges()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18, weight: .semibold))
+                                
+                                Text("Valider la sélection")
+                                    .font(.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.3, green: 0.7, blue: 0.4),
+                                        Color(red: 0.2, green: 0.6, blue: 0.5)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.3), radius: 12, x: 0, y: 6)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
             }
             .navigationTitle("Ajouter à un dossier")
@@ -592,6 +632,9 @@ struct FolderPickerView: View {
                         dismiss()
                     }
                 }
+            }
+            .onAppear {
+                initializeSelection()
             }
             .sheet(isPresented: $showingNewFolderSheet) {
                 NavigationStack {
@@ -777,14 +820,38 @@ struct FolderPickerView: View {
         .buttonStyle(.plain)
     }
     
-    private func addToFolder(_ folder: RecipeFolder) {
-        if folder.recipes.contains(recipe) {
-            // Retirer de ce dossier
-            dataManager.removeRecipe(recipe, from: folder)
-        } else {
-            // Ajouter à ce dossier
-            dataManager.addRecipe(recipe, to: folder)
+    private func initializeSelection() {
+        // Initialiser la sélection avec les dossiers qui contiennent déjà la recette
+        selectedFolders = Set(dataManager.folders.filter { $0.recipes.contains(recipe) })
+    }
+    
+    private func toggleFolder(_ folder: RecipeFolder) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            if selectedFolders.contains(folder) {
+                selectedFolders.remove(folder)
+            } else {
+                selectedFolders.insert(folder)
+            }
+            hasChanges = true
         }
+    }
+    
+    private func saveChanges() {
+        // Parcourir tous les dossiers
+        for folder in dataManager.folders {
+            let isSelected = selectedFolders.contains(folder)
+            let containsRecipe = folder.recipes.contains(recipe)
+            
+            if isSelected && !containsRecipe {
+                // Ajouter la recette au dossier
+                dataManager.addRecipe(recipe, to: folder)
+            } else if !isSelected && containsRecipe {
+                // Retirer la recette du dossier
+                dataManager.removeRecipe(recipe, from: folder)
+            }
+        }
+        
+        dismiss()
     }
     
     private func createFolderAndAdd() {
