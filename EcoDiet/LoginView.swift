@@ -31,7 +31,7 @@ struct LoginView: View {
                             Image("EcoDietLogo")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 88, height: 88)
+                                .frame(width: 160, height: 160)
                                 .shadow(color: primaryGreen.opacity(0.2), radius: 10, x: 0, y: 8)
                         } else {
                             Image(systemName: "leaf.fill")
@@ -42,9 +42,6 @@ struct LoginView: View {
                         }
                     }
 
-                    Text("EcoDiet")
-                        .font(.largeTitle).bold()
-                        .foregroundStyle(.primary)
                     Text("L'appli qui vous veux du bien")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

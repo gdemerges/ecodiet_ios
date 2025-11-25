@@ -42,7 +42,7 @@ struct HomeView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "leaf.fill")
                                     .font(.caption2)
-                                    .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
+                                    .foregroundStyle(.ecoDietSecondaryGreen)
                                 
                                 Text("Mangez sainement, naturellement")
                                     .font(.caption)
@@ -66,15 +66,15 @@ struct HomeView: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(red: 0.3, green: 0.7, blue: 0.4),
-                                                Color(red: 0.2, green: 0.6, blue: 0.5)
+                                                .ecoDietGreen,
+                                                .ecoDietSecondaryGreen
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
                                     )
                                     .frame(width: 44, height: 44)
-                                    .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.3), radius: 8, x: 0, y: 4)
+                                    .shadow(color: Color.ecoDietGreen.opacity(0.3), radius: 8, x: 0, y: 4)
                                 
                                 Image(systemName: "person.crop.circle")
                                     .font(.system(size: 24, weight: .semibold))
@@ -94,8 +94,8 @@ struct HomeView: View {
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 0.9, green: 0.6, blue: 0.2),
-                                            Color(red: 1.0, green: 0.7, blue: 0.3)
+                                            .ecoDietOrange,
+                                            .ecoDietOrange.opacity(0.8)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -141,8 +141,8 @@ struct HomeView: View {
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 0.3, green: 0.7, blue: 0.4),
-                                            Color(red: 0.2, green: 0.6, blue: 0.5)
+                                            .ecoDietGreen,
+                                            .ecoDietSecondaryGreen
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -368,8 +368,8 @@ struct RecipeCard: View {
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.4),
-                            Color(red: 0.2, green: 0.6, blue: 0.5).opacity(0.2)
+                            Color.ecoDietGreen.opacity(0.4),
+                            Color.ecoDietSecondaryGreen.opacity(0.2)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -377,7 +377,7 @@ struct RecipeCard: View {
                     lineWidth: 2
                 )
         )
-        .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.2), radius: 20, x: 0, y: 10)
+        .shadow(color: Color.ecoDietGreen.opacity(0.2), radius: 20, x: 0, y: 10)
     }
 }
 
@@ -393,8 +393,8 @@ struct QuizCard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.3, green: 0.7, blue: 0.4),
-                                Color(red: 0.2, green: 0.6, blue: 0.5)
+                                .ecoDietGreen,
+                                .ecoDietSecondaryGreen
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -466,7 +466,7 @@ struct QuizCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "leaf.circle.fill")
                         .font(.caption)
-                        .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
+                        .foregroundStyle(Color.ecoDietGreen)
                     
                     Text("Alimentation durable")
                         .font(.headline)
@@ -489,8 +489,8 @@ struct QuizCard: View {
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.4),
-                            Color(red: 0.2, green: 0.6, blue: 0.5).opacity(0.2)
+                            Color.ecoDietGreen.opacity(0.4),
+                            Color.ecoDietSecondaryGreen.opacity(0.2)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -498,7 +498,7 @@ struct QuizCard: View {
                     lineWidth: 2
                 )
         )
-        .shadow(color: Color(red: 0.3, green: 0.7, blue: 0.4).opacity(0.2), radius: 20, x: 0, y: 10)
+        .shadow(color: Color.ecoDietGreen.opacity(0.2), radius: 20, x: 0, y: 10)
         .onAppear {
             withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
                 isAnimating = true
@@ -522,8 +522,8 @@ struct SportsQuizCard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.95, green: 0.5, blue: 0.2),
-                                Color(red: 0.9, green: 0.3, blue: 0.3)
+                                .ecoDietOrange,
+                                .ecoDietOrange.opacity(0.85)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -595,7 +595,7 @@ struct SportsQuizCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "bolt.circle.fill")
                         .font(.caption)
-                        .foregroundStyle(Color(red: 0.95, green: 0.5, blue: 0.2))
+                        .foregroundStyle(.ecoDietOrange)
                     
                     Text("Nutrition sportive")
                         .font(.headline)
@@ -618,8 +618,8 @@ struct SportsQuizCard: View {
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.95, green: 0.5, blue: 0.2).opacity(0.4),
-                            Color(red: 0.9, green: 0.3, blue: 0.3).opacity(0.2)
+                            Color.ecoDietOrange.opacity(0.4),
+                            Color.ecoDietOrange.opacity(0.2)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -627,7 +627,7 @@ struct SportsQuizCard: View {
                     lineWidth: 2
                 )
         )
-        .shadow(color: Color(red: 0.95, green: 0.5, blue: 0.2).opacity(0.2), radius: 20, x: 0, y: 10)
+        .shadow(color: Color.ecoDietOrange.opacity(0.2), radius: 20, x: 0, y: 10)
         .onAppear {
             withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
                 isAnimating = true
