@@ -27,7 +27,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            AuthBackground().ignoresSafeArea()
+            Color.ecoDietSand.ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
@@ -133,6 +133,7 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, 2)
                     }
+                    .background(Color.clear)
 
                     HStack {
                         HStack(spacing: 8) {
@@ -361,23 +362,12 @@ struct RecipeCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(Color.white)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.ecoDietGreen.opacity(0.4),
-                            Color.ecoDietSecondaryGreen.opacity(0.2)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 2
-                )
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
         )
-        .shadow(color: Color.ecoDietGreen.opacity(0.2), radius: 20, x: 0, y: 10)
     }
 }
 
@@ -482,7 +472,8 @@ struct QuizCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 26, style: .continuous)

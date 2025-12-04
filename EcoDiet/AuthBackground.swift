@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct AuthBackground: View {
-    // Couleurs écologiques et naturelles (plus vertes et saturées)
-    private let topColor = Color(red: 0.82, green: 0.93, blue: 0.85)      // Vert pâle plus saturé
-    private let middleColor = Color(red: 0.78, green: 0.91, blue: 0.82)   // Vert clair plus saturé
-    private let bottomColor = Color(red: 0.75, green: 0.88, blue: 0.80)   // Vert moyen plus saturé
+    // Couleur de base EcoDiet Sand (#F5ECD9)
+    private let baseColor: Color = .ecoDietSand
+    private let topColor: Color = .ecoDietSand
+    private let middleColor: Color = .ecoDietSand.opacity(0.95)
+    private let bottomColor: Color = .ecoDietSand.opacity(0.9)
     
     @State private var animateCircles = false
     @State private var animateAccent = false
