@@ -50,7 +50,7 @@ final class Recipe: Identifiable, Hashable {
     var ustensiles: [String] = [] // Ustensiles nécessaires
     var etapes: [String] = [] // Étapes de préparation
     var sourceURL: String? // URL source (Marmiton, etc.)
-    
+
     // Relations
     var folders: [RecipeFolder] = []
     var userProfiles: [UserProfile] = [] // Pour les favoris
@@ -173,11 +173,11 @@ final class RecipeFolder: Identifiable, Hashable {
     var imageName: String
     var colorHex: String // Couleur de fond du logo en hex
     var timestamp: Date
-    
+
     // Relations
     @Relationship(deleteRule: .nullify, inverse: \Recipe.folders)
     var recipes: [Recipe] = []
-    
+
     // Lien avec l'utilisateur propriétaire
     var owner: UserProfile?
     
@@ -215,18 +215,18 @@ final class UserProfile {
     var allergies: [String] = []
     var cookingLevel: CookingLevel
     var joinDate: Date
-    
+
     // Propriétés pour les profils hardcodés (en attendant PostgreSQL)
     var age: Int = 0
     var height: Double = 0.0 // en cm
     var weight: Double = 0.0 // en kg
     var activityLevel: String = "" // Niveau d'activité physique
     var healthGoals: [String] = [] // Objectifs de santé
-    
+
     // Relations
     @Relationship(deleteRule: .nullify, inverse: \Recipe.userProfiles)
     var favoriteRecipes: [Recipe] = []
-    
+
     @Relationship(deleteRule: .cascade, inverse: \RecipeFolder.owner)
     var folders: [RecipeFolder] = []
     

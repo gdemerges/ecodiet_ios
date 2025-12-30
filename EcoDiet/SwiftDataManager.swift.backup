@@ -5,30 +5,14 @@ import Observation
 @Observable
 class SwiftDataManager {
     var modelContext: ModelContext
-
+    
     // Cache des données pour la performance
     var userProfile: UserProfile?
     var recipes: [Recipe] = []
     var folders: [RecipeFolder] = []
-
-    // MARK: - Repositories (Phase 2)
-    // Exposés en internal pour injection Environment
-    internal let recipeRepo: RecipeRepository
-    internal let folderRepo: FolderRepository
-    internal let profileRepo: UserProfileRepository
-    private let defaultDataService: DefaultDataService
-    internal let recommendationService: RecommendationService
-
+    
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
-
-        // Initialiser les repositories
-        self.recipeRepo = RecipeRepository(modelContext: modelContext)
-        self.folderRepo = FolderRepository(modelContext: modelContext)
-        self.profileRepo = UserProfileRepository(modelContext: modelContext)
-        self.defaultDataService = DefaultDataService(modelContext: modelContext)
-        self.recommendationService = RecommendationService()
-
         loadData()
     }
     

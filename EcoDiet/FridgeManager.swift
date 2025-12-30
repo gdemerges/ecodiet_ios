@@ -4,7 +4,15 @@ import SwiftData
 @Observable
 class FridgeManager {
     private var modelContext: ModelContext
-    var ingredients: [Ingredient] = []
+
+    // MARK: - Repository (Phase 3)
+    // Exposé en internal pour injection Environment
+    internal let ingredientRepo: IngredientRepository
+
+    // Exposer les ingredients depuis le repository pour compatibilité
+    var ingredients: [Ingredient] {
+        ingredientRepo.ingredients
+    }
 
     // Cache pour les ingredients dans le frigo (optimisation)
     private var fridgeIngredientsCache: Set<String> = []
@@ -12,21 +20,24 @@ class FridgeManager {
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
-        loadIngredients()
+        self.ingredientRepo = IngredientRepository(modelContext: modelContext)
+
+        // Attendre que le repository charge ses données
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 secondes
+            await MainActor.run {
+                refreshCache()
+            }
+        }
     }
 
     func loadIngredients() {
-        let descriptor = FetchDescriptor<Ingredient>(
-            sortBy: [SortDescriptor(\.name)]
-        )
-
-        do {
-            let fetchedIngredients = try modelContext.fetch(descriptor)
-            ingredients = fetchedIngredients
-            refreshCache()
-        } catch {
-            print("Erreur lors du chargement des ingredients: \(error)")
-            ingredients = []
+        // Déléguer au repository
+        Task {
+            await ingredientRepo.loadAllIngredients()
+            await MainActor.run {
+                refreshCache()
+            }
         }
     }
 
@@ -38,13 +49,10 @@ class FridgeManager {
     }
 
     func addIngredient(_ ingredient: Ingredient) {
-        modelContext.insert(ingredient)
-
+        // Déléguer au repository
         do {
-            try modelContext.save()
-            // Mise a jour incrementale au lieu de recharger tout
-            ingredients.append(ingredient)
-            ingredients.sort { $0.name < $1.name }
+            try ingredientRepo.addIngredient(ingredient)
+            // Mise à jour du cache
             if ingredient.isInFridge {
                 fridgeIngredientsCache.insert(ingredient.name.lowercased())
             }
@@ -54,12 +62,10 @@ class FridgeManager {
     }
 
     func removeIngredient(_ ingredient: Ingredient) {
-        modelContext.delete(ingredient)
-
+        // Déléguer au repository
         do {
-            try modelContext.save()
-            // Mise a jour incrementale
-            ingredients.removeAll { $0.id == ingredient.id }
+            try ingredientRepo.removeIngredient(ingredient)
+            // Mise à jour du cache
             fridgeIngredientsCache.remove(ingredient.name.lowercased())
         } catch {
             print("Erreur lors de la suppression de l'ingredient: \(error)")
@@ -67,9 +73,10 @@ class FridgeManager {
     }
 
     func updateIngredient(_ ingredient: Ingredient) {
+        // Déléguer au repository
         do {
-            try modelContext.save()
-            // Mettre a jour le cache si necessaire
+            try ingredientRepo.updateIngredient(ingredient)
+            // Mettre à jour le cache si nécessaire
             if ingredient.isInFridge {
                 fridgeIngredientsCache.insert(ingredient.name.lowercased())
             } else {
@@ -83,9 +90,10 @@ class FridgeManager {
     func toggleFridgeStatus(_ ingredient: Ingredient) {
         ingredient.isInFridge.toggle()
 
+        // Déléguer au repository
         do {
-            try modelContext.save()
-            // Mise a jour du cache
+            try ingredientRepo.updateIngredient(ingredient)
+            // Mise à jour du cache
             if ingredient.isInFridge {
                 fridgeIngredientsCache.insert(ingredient.name.lowercased())
             } else {

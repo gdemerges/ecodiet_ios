@@ -43,25 +43,36 @@ struct ContentView: View {
         ZStack {
             Group {
                 if let dataManager = dataManager, let fridgeManager = fridgeManager {
-                    if isAuthenticated {
-                        MainTabView(
-                            dataManager: dataManager,
-                            profileManager: profileManager,
-                            fridgeManager: fridgeManager,
-                            isAuthenticated: $isAuthenticated
-                        )
-                    } else {
-                        LoginView(
-                            authManager: authManager,
-                            profileManager: profileManager,
-                            isAuthenticated: $isAuthenticated,
-                            onSignup: { isPresentingSignup = true }
-                        )
-                        .sheet(isPresented: $isPresentingSignup) {
-                            SignupFlowView(onComplete: handleSignupCompletion)
-                                .presentationBackground(.clear)
+                    // MARK: - Phase 3: Injection de dépendances via Environment
+                    let content = Group {
+                        if isAuthenticated {
+                            MainTabView(
+                                dataManager: dataManager,
+                                profileManager: profileManager,
+                                fridgeManager: fridgeManager,
+                                isAuthenticated: $isAuthenticated
+                            )
+                        } else {
+                            LoginView(
+                                authManager: authManager,
+                                profileManager: profileManager,
+                                isAuthenticated: $isAuthenticated,
+                                onSignup: { isPresentingSignup = true }
+                            )
+                            .sheet(isPresented: $isPresentingSignup) {
+                                SignupFlowView(onComplete: handleSignupCompletion)
+                                    .presentationBackground(.clear)
+                            }
                         }
                     }
+
+                    // Injection des repositories via Environment
+                    content
+                        .environment(\.recipeRepository, dataManager.recipeRepo)
+                        .environment(\.folderRepository, dataManager.folderRepo)
+                        .environment(\.profileRepository, dataManager.profileRepo)
+                        .environment(\.ingredientRepository, fridgeManager.ingredientRepo)
+                        .environment(\.recommendationService, dataManager.recommendationService)
                 } else {
                     ProgressView("Chargement...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
