@@ -5,13 +5,16 @@ struct FridgeView: View {
     let fridgeManager: FridgeManager
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @State private var debouncedSearchText = ""
     @State private var showingAddIngredient = false
+    @State private var showingBarcodeScanner = false
     @State private var selectedCategory: IngredientCategory? = nil
     @State private var showingCategoryPicker = false
-    
+    @State private var searchDebouncer = Debouncer(delay: 0.3)
+
     var filteredIngredients: [Ingredient] {
-        let filtered = searchText.isEmpty ? fridgeManager.ingredients : fridgeManager.ingredients.filter { ingredient in
-            ingredient.name.localizedCaseInsensitiveContains(searchText)
+        let filtered = debouncedSearchText.isEmpty ? fridgeManager.ingredients : fridgeManager.ingredients.filter { ingredient in
+            ingredient.name.localizedCaseInsensitiveContains(debouncedSearchText)
         }
         
         if let category = selectedCategory {
@@ -190,20 +193,42 @@ struct FridgeView: View {
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showingCategoryPicker)
             }
             
-            // Bouton flottant pour ajouter un ingrédient
+            // Boutons flottants pour ajouter un ingredient
             VStack {
                 Spacer()
-                
-                HStack {
+
+                HStack(spacing: 12) {
                     Spacer()
-                    
+
+                    // Bouton scanner
+                    Button {
+                        showingBarcodeScanner = true
+                    } label: {
+                        Image(systemName: "barcode.viewfinder")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 50, height: 50)
+                            .background(
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [.ecoDietOrange, .ecoDietOrange.opacity(0.8)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            )
+                            .shadow(color: Color.ecoDietOrange.opacity(0.4), radius: 8, x: 0, y: 4)
+                    }
+
+                    // Bouton ajouter manuellement
                     Button {
                         showingAddIngredient = true
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "plus")
                                 .font(.system(size: 18, weight: .bold))
-                            
+
                             Text("Ajouter")
                                 .font(.headline)
                         }
@@ -231,14 +256,25 @@ struct FridgeView: View {
         .navigationTitle("Mon frigo")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingAddIngredient) {
-            // Callback après fermeture du sheet
             fridgeManager.loadIngredients()
         } content: {
             AddIngredientView(fridgeManager: fridgeManager)
         }
+        .sheet(isPresented: $showingBarcodeScanner) {
+            fridgeManager.loadIngredients()
+        } content: {
+            BarcodeScanIngredientView(fridgeManager: fridgeManager)
+        }
         .onAppear {
             // Rafraîchir la liste des ingrédients quand la vue apparaît
             fridgeManager.loadIngredients()
+        }
+        .onChange(of: searchText) { _, newValue in
+            searchDebouncer.debounce {
+                await MainActor.run {
+                    debouncedSearchText = newValue
+                }
+            }
         }
     }
 }
@@ -392,22 +428,25 @@ struct IngredientRow: View {
                     Text(ingredient.name)
                         .font(.body.weight(.medium))
                         .foregroundStyle(.primary)
-                    
+
                     HStack(spacing: 8) {
                         Text(ingredient.category.rawValue)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        
+
                         if ingredient.isInFridge {
                             HStack(spacing: 2) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.caption2)
-                                
+
                                 Text("Disponible")
                                     .font(.caption2)
                             }
                             .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 0.4))
                         }
+
+                        // Badge d'expiration
+                        ExpirationBadge(expirationDate: ingredient.expirationDate)
                     }
                 }
                 

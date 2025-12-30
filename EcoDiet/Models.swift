@@ -47,12 +47,15 @@ final class Recipe: Identifiable, Hashable {
     var dietaryTags: [String] = [] // Tags: "Végétarien", "Vegan", "Sans gluten", "Sans lactose", etc.
     var allergens: [String] = [] // Allergènes: "Fruits à coque", "Gluten", "Lactose", "Œufs", etc.
     var ingredientsData: Data? // Stockage sérialisé des ingrédients
+    var ustensiles: [String] = [] // Ustensiles nécessaires
+    var etapes: [String] = [] // Étapes de préparation
+    var sourceURL: String? // URL source (Marmiton, etc.)
     
     // Relations
     var folders: [RecipeFolder] = []
     var userProfiles: [UserProfile] = [] // Pour les favoris
     
-    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000, preparationTime: Int = 30, dietaryTags: [String] = [], allergens: [String] = [], requiredIngredients: [RecipeIngredient] = []) {
+    init(title: String, subtitle: String, imageName: String, carbonFootprint: Double = 1000, preparationTime: Int = 30, dietaryTags: [String] = [], allergens: [String] = [], requiredIngredients: [RecipeIngredient] = [], ustensiles: [String] = [], etapes: [String] = [], sourceURL: String? = nil) {
         self.id = UUID()
         self.title = title
         self.subtitle = subtitle
@@ -63,6 +66,9 @@ final class Recipe: Identifiable, Hashable {
         self.dietaryTags = dietaryTags
         self.allergens = allergens
         self.requiredIngredients = requiredIngredients
+        self.ustensiles = ustensiles
+        self.etapes = etapes
+        self.sourceURL = sourceURL
     }
     
     // Computed property pour gérer les ingrédients

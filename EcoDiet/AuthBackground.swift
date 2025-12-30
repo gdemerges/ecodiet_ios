@@ -1,12 +1,29 @@
 import SwiftUI
 
 struct AuthBackground: View {
-    // Couleur de base EcoDiet Sand (#F5ECD9)
-    private let baseColor: Color = .ecoDietSand
-    private let topColor: Color = .ecoDietSand
-    private let middleColor: Color = .ecoDietSand.opacity(0.95)
-    private let bottomColor: Color = .ecoDietSand.opacity(0.9)
-    
+    @Environment(\.colorScheme) private var colorScheme
+
+    // Couleurs adaptees au theme
+    private var baseColor: Color {
+        colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.1) : .ecoDietSand
+    }
+
+    private var topColor: Color {
+        colorScheme == .dark ? Color(red: 0.1, green: 0.12, blue: 0.14) : .ecoDietSand
+    }
+
+    private var middleColor: Color {
+        colorScheme == .dark ? Color(red: 0.08, green: 0.1, blue: 0.12) : .ecoDietSand.opacity(0.95)
+    }
+
+    private var bottomColor: Color {
+        colorScheme == .dark ? Color(red: 0.06, green: 0.08, blue: 0.1) : .ecoDietSand.opacity(0.9)
+    }
+
+    private var circleOpacity: Double {
+        colorScheme == .dark ? 0.15 : 0.25
+    }
+
     @State private var animateCircles = false
     @State private var animateAccent = false
 

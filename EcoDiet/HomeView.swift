@@ -7,218 +7,35 @@ struct HomeView: View {
     let fridgeManager: FridgeManager
     @Binding var isAuthenticated: Bool
     @State private var headerAppeared = false
+    @Environment(\.colorScheme) private var colorScheme
 
     private var greeting: String {
-        let firstName = profileManager.userProfile?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let hour = Calendar.current.component(.hour, from: Date())
-        
-        let timeGreeting: String
-        switch hour {
-        case 6..<18:
-            timeGreeting = "Bonjour"
-        case 18..<22:
-            timeGreeting = "Bonsoir"
-        default:
-            timeGreeting = "Bonsoir"
-        }
-        
-        return firstName.isEmpty ? "\(timeGreeting) !" : "\(timeGreeting) \(firstName) !"
+        HomeView.buildGreeting(for: profileManager.userProfile)
     }
 
     var body: some View {
         ZStack {
-            Color.ecoDietSand.ignoresSafeArea()
+            ThemeColors.background(for: colorScheme).ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Header amélioré avec animation
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(greeting)
-                                .font(.largeTitle).bold()
-                                .opacity(headerAppeared ? 1 : 0)
-                                .offset(x: headerAppeared ? 0 : -20)
-                            
-                            HStack(spacing: 4) {
-                                Image(systemName: "leaf.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.ecoDietSecondaryGreen)
-                                
-                                Text("Mangez sainement, naturellement")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .opacity(headerAppeared ? 1 : 0)
-                            .offset(x: headerAppeared ? 0 : -20)
-                        }
-                        
-                        Spacer()
-                        
-                        NavigationLink {
-                            ProfileView(
-                                profileManager: profileManager,
-                                dataManager: dataManager,
-                                isAuthenticated: $isAuthenticated
-                            )
-                        } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                .ecoDietGreen,
-                                                .ecoDietSecondaryGreen
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 44, height: 44)
-                                    .shadow(color: Color.ecoDietGreen.opacity(0.3), radius: 8, x: 0, y: 4)
-                                
-                                Image(systemName: "person.crop.circle")
-                                    .font(.system(size: 24, weight: .semibold))
-                                    .foregroundStyle(.white)
-                            }
-                            .scaleEffect(headerAppeared ? 1 : 0.5)
-                            .opacity(headerAppeared ? 1 : 0)
-                        }
-                        .accessibilityLabel("Profil")
-                    }
-                    .padding(.top, 8)
+                    // Header
+                    HomeHeaderView(
+                        greeting: greeting,
+                        profileManager: profileManager,
+                        dataManager: dataManager,
+                        isAuthenticated: $isAuthenticated,
+                        headerAppeared: headerAppeared
+                    )
 
-                    HStack {
-                        HStack(spacing: 8) {
-                            Image(systemName: "sparkles")
-                                .font(.title3)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            .ecoDietOrange,
-                                            .ecoDietOrange.opacity(0.8)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                            
-                            Text("Juste pour vous")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(.primary)
-                        }
-                        Spacer()
-                        NavigationLink {
-                            RecommendationView(dataManager: dataManager, profileManager: profileManager)
-                        } label: {
-                            Text("Voir tout")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(.ultraThinMaterial, in: Capsule())
-                        }
-                        .accessibilityLabel("Voir toutes les recommandations")
-                    }
+                    // Section "Juste pour vous"
+                    recommendationsSection
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(dataManager.recipes) { recipe in
-                                NavigationLink {
-                                    RecipeDetailView(recipe: recipe, profileManager: profileManager, dataManager: dataManager)
-                                } label: {
-                                    RecipeCard(recipe: recipe)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        .padding(.horizontal, 2)
-                    }
-                    .background(Color.clear)
+                    // Section "Nos recettes"
+                    recipesSection
 
-                    HStack {
-                        HStack(spacing: 8) {
-                            Image(systemName: "book.fill")
-                                .font(.title3)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            .ecoDietGreen,
-                                            .ecoDietSecondaryGreen
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                            
-                            Text("Nos recettes")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(.primary)
-                        }
-                        Spacer()
-                        NavigationLink {
-                            ListView(profileManager: profileManager, dataManager: dataManager)
-                        } label: {
-                            Text("Voir tout")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(.ultraThinMaterial, in: Capsule())
-                        }
-                        .accessibilityLabel("Voir toutes les recettes")
-                    }
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(dataManager.recipes) { recipe in
-                                NavigationLink {
-                                    RecipeDetailView(recipe: recipe, profileManager: profileManager, dataManager: dataManager)
-                                } label: {
-                                    RecipeCard(recipe: recipe)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        .padding(.horizontal, 2)
-                    }
-
-                    HStack {
-                        HStack(spacing: 8) {
-                            Image(systemName: "brain.head.profile")
-                                .font(.title3)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 0.5, green: 0.4, blue: 0.7),
-                                            Color(red: 0.6, green: 0.5, blue: 0.8)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                            
-                            Text("Testez vos connaissances")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(.primary)
-                        }
-                        Spacer()
-                    }
-
-                    VStack(spacing: 16) {
-                        NavigationLink {
-                            EcoQuizView()
-                        } label: {
-                            QuizCard()
-                        }
-                        .buttonStyle(PlainButtonStyle())
-
-                        NavigationLink {
-                            SportsQuizView()
-                        } label: {
-                            SportsQuizCard()
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
+                    // Section Quiz
+                    QuizSection()
                 }
                 .padding(24)
             }
@@ -228,6 +45,69 @@ struct HomeView: View {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
                 headerAppeared = true
             }
+        }
+    }
+
+    // MARK: - Sections
+
+    private var recommendationsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HomeSectionHeader(
+                icon: "sparkles",
+                title: "Juste pour vous",
+                iconColors: [.ecoDietOrange, .ecoDietOrange.opacity(0.8)],
+                trailingContent: AnyView(
+                    NavigationLink {
+                        RecommendationView(dataManager: dataManager, profileManager: profileManager)
+                    } label: {
+                        Text("Voir tout")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial, in: Capsule())
+                    }
+                )
+            )
+
+            RecipeCarousel(
+                recipes: dataManager.recipes,
+                profileManager: profileManager,
+                dataManager: dataManager
+            )
+        }
+    }
+
+    private var recipesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                HomeSectionHeader(
+                    icon: "book.fill",
+                    title: "Nos recettes",
+                    iconColors: [.ecoDietGreen, .ecoDietSecondaryGreen]
+                )
+
+                Spacer()
+
+                PostgreSQLImportButton(dataManager: dataManager)
+
+                NavigationLink {
+                    ListView(profileManager: profileManager, dataManager: dataManager)
+                } label: {
+                    Text("Voir tout")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+            }
+
+            RecipeCarousel(
+                recipes: dataManager.recipes,
+                profileManager: profileManager,
+                dataManager: dataManager
+            )
         }
     }
 }

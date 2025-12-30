@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5731609F2EB65E970091E369 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 5731609E2EB65E970091E369 /* AsyncAlgorithms */; };
 		578C4A082EC5E1CE00CA1F6F /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 578C4A072EC5E1CE00CA1F6F /* AsyncAlgorithms */; };
 /* End PBXBuildFile section */
 
@@ -70,7 +69,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5731609F2EB65E970091E369 /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,7 +130,6 @@
 			);
 			name = EcoDiet;
 			packageProductDependencies = (
-				5731609E2EB65E970091E369 /* AsyncAlgorithms */,
 			);
 			productName = EcoDiet;
 			productReference = 570D64E22EB372EA005480FB /* EcoDiet.app */;
@@ -622,11 +619,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		5731609E2EB65E970091E369 /* AsyncAlgorithms */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5731609D2EB65E720091E369 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
-			productName = AsyncAlgorithms;
-		};
 		578C4A072EC5E1CE00CA1F6F /* AsyncAlgorithms */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5731609D2EB65E720091E369 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
