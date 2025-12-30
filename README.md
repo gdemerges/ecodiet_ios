@@ -493,7 +493,7 @@ Ce projet est developpe dans le cadre des YDays - Mastere 1 Data Engineer a Ynov
 
 **Guillaume Demerges**
 - Mastere 1 Data Engineer @ Ynov
-- Projet YDays 2024-2025
+- Projet YDays 2025-2026
 
 ## 📞 Support
 
