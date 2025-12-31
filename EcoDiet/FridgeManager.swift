@@ -22,9 +22,9 @@ class FridgeManager {
         self.modelContext = modelContext
         self.ingredientRepo = IngredientRepository(modelContext: modelContext)
 
-        // Attendre que le repository charge ses données
+        // Attendre que le repository ait fini de charger ses données
         Task {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 secondes
+            await ingredientRepo.waitForLoad()
             await MainActor.run {
                 refreshCache()
             }

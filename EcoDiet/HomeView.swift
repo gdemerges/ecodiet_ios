@@ -512,20 +512,24 @@ struct SportsQuizCard: View {
 
 #Preview {
     @MainActor in
-    let config: ModelConfiguration = ModelConfiguration(isStoredInMemoryOnly: true)
-    let schema: Schema = Schema([
-        Recipe.self,
-        RecipeFolder.self,
-        UserProfile.self,
-        Ingredient.self
-    ])
-    let container: ModelContainer = try! ModelContainer(for: schema, configurations: config)
-    let context: ModelContext = ModelContext(container)
-    let manager = SwiftDataManager(modelContext: context)
-    let fridgeManager = FridgeManager(modelContext: context)
-    let upm = UserProfileManager()
-    upm.configure(with: manager)
-    return NavigationStack {
-        HomeView(dataManager: manager, profileManager: upm, fridgeManager: fridgeManager, isAuthenticated: .constant(true))
+    do {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let schema = Schema([
+            Recipe.self,
+            RecipeFolder.self,
+            UserProfile.self,
+            Ingredient.self
+        ])
+        let container = try ModelContainer(for: schema, configurations: config)
+        let context = ModelContext(container)
+        let manager = SwiftDataManager(modelContext: context)
+        let fridgeManager = FridgeManager(modelContext: context)
+        let upm = UserProfileManager()
+        upm.configure(with: manager)
+        return NavigationStack {
+            HomeView(dataManager: manager, profileManager: upm, fridgeManager: fridgeManager, isAuthenticated: .constant(true))
+        }
+    } catch {
+        return Text("Erreur de chargement: \(error.localizedDescription)")
     }
 }

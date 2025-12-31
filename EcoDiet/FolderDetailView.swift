@@ -513,24 +513,28 @@ struct RecipeSelectionRow: View {
 }
 
 #Preview {
-    let schema = Schema([Recipe.self, RecipeFolder.self, UserProfile.self])
-    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: schema, configurations: [config])
-    let context = ModelContext(container)
-    let manager = SwiftDataManager(modelContext: context)
-    let profileManager = UserProfileManager()
-    profileManager.configure(with: manager)
-    let sampleFolder = RecipeFolder(title: "Recettes sport", imageName: "figure.run", colorHex: "#EF4444")
-    manager.addFolder(sampleFolder)
-    let recipe1 = Recipe(title: "Smoothie protéiné", subtitle: "Banane et whey", imageName: "cup.and.saucer")
-    let recipe2 = Recipe(title: "Bowl énergétique", subtitle: "Avoine et fruits", imageName: "leaf")
-    manager.addRecipe(recipe1)
-    manager.addRecipe(recipe2)
-    if let current = manager.folder(with: sampleFolder.id) {
-        manager.addRecipe(recipe1, to: current)
-        manager.addRecipe(recipe2, to: current)
-    }
-    return NavigationStack {
-        FolderDetailView(folder: sampleFolder, dataManager: manager, profileManager: profileManager)
+    do {
+        let schema = Schema([Recipe.self, RecipeFolder.self, UserProfile.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = ModelContext(container)
+        let manager = SwiftDataManager(modelContext: context)
+        let profileManager = UserProfileManager()
+        profileManager.configure(with: manager)
+        let sampleFolder = RecipeFolder(title: "Recettes sport", imageName: "figure.run", colorHex: "#EF4444")
+        manager.addFolder(sampleFolder)
+        let recipe1 = Recipe(title: "Smoothie protéiné", subtitle: "Banane et whey", imageName: "cup.and.saucer")
+        let recipe2 = Recipe(title: "Bowl énergétique", subtitle: "Avoine et fruits", imageName: "leaf")
+        manager.addRecipe(recipe1)
+        manager.addRecipe(recipe2)
+        if let current = manager.folder(with: sampleFolder.id) {
+            manager.addRecipe(recipe1, to: current)
+            manager.addRecipe(recipe2, to: current)
+        }
+        return NavigationStack {
+            FolderDetailView(folder: sampleFolder, dataManager: manager, profileManager: profileManager)
+        }
+    } catch {
+        return Text("Erreur de chargement: \(error.localizedDescription)")
     }
 }

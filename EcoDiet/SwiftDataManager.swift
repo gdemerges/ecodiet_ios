@@ -2,6 +2,31 @@ import SwiftUI
 import SwiftData
 import Observation
 
+// MARK: - Validation Errors
+
+enum ProfileValidationError: LocalizedError {
+    case emptyName
+    case nameTooLong(maxLength: Int)
+    case invalidEmail
+    case invalidPreference(String)
+    case invalidAllergy(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .emptyName:
+            return "Le nom ne peut pas être vide"
+        case .nameTooLong(let maxLength):
+            return "Le nom ne peut pas dépasser \(maxLength) caractères"
+        case .invalidEmail:
+            return "L'adresse email n'est pas valide"
+        case .invalidPreference(let pref):
+            return "Préférence alimentaire invalide: \(pref)"
+        case .invalidAllergy(let allergy):
+            return "Allergie invalide: \(allergy)"
+        }
+    }
+}
+
 @Observable
 class SwiftDataManager {
     var modelContext: ModelContext
@@ -395,20 +420,86 @@ class SwiftDataManager {
         }
     }
     
-    func updateProfile(name: String, email: String, cookingLevel: CookingLevel, 
-                      dietaryPreferences: [String], allergies: [String]) {
+    /// Met à jour le profil utilisateur avec validation des données
+    /// - Throws: ProfileValidationError si les données sont invalides
+    func updateProfile(name: String, email: String, cookingLevel: CookingLevel,
+                      dietaryPreferences: [String], allergies: [String]) throws {
         guard let profile = userProfile else { return }
-        
+
+        // Validation des données
+        try validateProfileData(name: name, email: email, dietaryPreferences: dietaryPreferences, allergies: allergies)
+
+        // Sauvegarder les valeurs originales pour rollback
+        let originalName = profile.name
+        let originalEmail = profile.email
+        let originalCookingLevel = profile.cookingLevel
+        let originalPreferences = profile.dietaryPreferences
+        let originalAllergies = profile.allergies
+
+        // Appliquer les modifications
         profile.name = name
         profile.email = email
         profile.cookingLevel = cookingLevel
         profile.dietaryPreferences = dietaryPreferences
         profile.allergies = allergies
-        
+
         do {
             try modelContext.save()
         } catch {
+            // Rollback en cas d'erreur de sauvegarde
+            profile.name = originalName
+            profile.email = originalEmail
+            profile.cookingLevel = originalCookingLevel
+            profile.dietaryPreferences = originalPreferences
+            profile.allergies = originalAllergies
             print("Erreur lors de la mise à jour du profil: \(error)")
+            throw error
+        }
+    }
+
+    // MARK: - Validation
+
+    private static let maxNameLength = 100
+    private static let validDietaryPreferences = [
+        "Végétarien", "Vegan", "Flexitarien", "Omnivore", "Pescetarien",
+        "Sans gluten", "Sans lactose", "Bio", "Local", "Équilibré",
+        "Riche en protéines", "Faible en glucides", "Faible en gras"
+    ]
+    private static let validAllergies = [
+        "Gluten", "Lactose", "Œufs", "Arachides", "Fruits à coque",
+        "Soja", "Poisson", "Crustacés", "Sésame", "Moutarde", "Céleri", "Sulfites"
+    ]
+
+    private func validateProfileData(name: String, email: String,
+                                     dietaryPreferences: [String], allergies: [String]) throws {
+        // Validation du nom
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedName.isEmpty {
+            throw ProfileValidationError.emptyName
+        }
+        if trimmedName.count > Self.maxNameLength {
+            throw ProfileValidationError.nameTooLong(maxLength: Self.maxNameLength)
+        }
+
+        // Validation de l'email
+        let emailRegex = #"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        if !email.isEmpty && !emailPredicate.evaluate(with: email) {
+            throw ProfileValidationError.invalidEmail
+        }
+
+        // Validation des préférences alimentaires
+        for preference in dietaryPreferences {
+            if !Self.validDietaryPreferences.contains(preference) {
+                throw ProfileValidationError.invalidPreference(preference)
+            }
+        }
+
+        // Validation des allergies
+        for allergy in allergies {
+            if !Self.validAllergies.contains(allergy) {
+                throw ProfileValidationError.invalidAllergy(allergy)
+            }
         }
     }
     

@@ -8,7 +8,10 @@
 import Foundation
 
 /// Profils utilisateur hardcodés temporaires
-/// TODO: Migrer vers PostgreSQL
+/// ⚠️ ATTENTION SÉCURITÉ: Ces credentials sont en clair dans le code source.
+/// Ils sont uniquement destinés au développement et aux tests.
+/// TODO: Migrer vers PostgreSQL avec authentification sécurisée avant la production.
+/// Ne JAMAIS utiliser ces credentials dans un environnement de production.
 struct HardcodedProfiles {
     
     // MARK: - Structure pour les credentials
@@ -141,8 +144,22 @@ struct HardcodedProfiles {
     }
     
     /// Retourne un profil par défaut pour les tests
+    /// Utilise un profil de fallback sécurisé si le tableau est vide
     static var defaultProfile: UserCredentials {
-        return profiles.first!
+        return profiles.first ?? UserCredentials(
+            email: "fallback@ecodiet.com",
+            password: "fallback",
+            profile: UserProfileData(
+                name: "Utilisateur",
+                age: 25,
+                height: 170,
+                weight: 65,
+                activityLevel: .moderate,
+                dietaryPreferences: [],
+                allergies: [],
+                healthGoals: []
+            )
+        )
     }
 }
 

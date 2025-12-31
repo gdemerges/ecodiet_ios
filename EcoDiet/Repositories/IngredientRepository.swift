@@ -6,11 +6,26 @@ import Observation
 class IngredientRepository: IngredientRepositoryProtocol {
     private let modelContext: ModelContext
     private(set) var ingredients: [Ingredient] = []
+    private(set) var isLoaded = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         Task {
             await loadAllIngredients()
+        }
+    }
+
+    /// Attend que le repository soit chargé
+    func waitForLoad() async {
+        // Si déjà chargé, retourner immédiatement
+        if isLoaded { return }
+
+        // Attendre avec un timeout de 5 secondes
+        let startTime = Date()
+        let timeout: TimeInterval = 5.0
+
+        while !isLoaded && Date().timeIntervalSince(startTime) < timeout {
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
         }
     }
 
@@ -26,6 +41,7 @@ class IngredientRepository: IngredientRepositoryProtocol {
         } catch {
             print("Error loading ingredients: \(error)")
         }
+        isLoaded = true
     }
 
     /// Récupère les ingrédients avec pagination

@@ -15,8 +15,9 @@ actor ImageCacheService {
         memoryCache.countLimit = 100
         memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
 
-        // Créer le répertoire de cache sur disque
-        let cachePath = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        // Créer le répertoire de cache sur disque avec fallback sécurisé
+        let cachePath = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? fileManager.temporaryDirectory
         cacheDirectory = cachePath.appendingPathComponent("ImageCache", isDirectory: true)
 
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)

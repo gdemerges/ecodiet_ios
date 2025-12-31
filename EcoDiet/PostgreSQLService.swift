@@ -33,13 +33,52 @@ struct MarmitonIngredient: Codable {
 class PostgreSQLService {
     // URL de votre API backend (vous devrez créer cette API)
     private let baseURL = "http://localhost:3000/api"
-    
+
+    // Configuration du retry pour les erreurs réseau transitoires
+    private let maxRetries = 3
+    private let initialRetryDelay: UInt64 = 500_000_000 // 0.5 seconde en nanosecondes
+
     // Configuration du décodeur JSON
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder
     }()
+
+    // MARK: - Retry Logic
+
+    /// Execute une requête avec retry automatique en cas d'erreur réseau transitoire
+    private func executeWithRetry<T>(
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        var lastError: Error?
+
+        for attempt in 0..<maxRetries {
+            do {
+                return try await operation()
+            } catch let error as URLError where isTransientError(error) {
+                lastError = error
+                let delay = initialRetryDelay * UInt64(1 << attempt) // Exponential backoff
+                try? await Task.sleep(nanoseconds: delay)
+                print("Retry \(attempt + 1)/\(maxRetries) après erreur: \(error.localizedDescription)")
+            } catch {
+                throw error // Non-transient error, don't retry
+            }
+        }
+
+        throw lastError ?? PostgreSQLError.networkError(NSError(domain: "RetryFailed", code: -1))
+    }
+
+    /// Vérifie si l'erreur est transitoire et mérite un retry
+    private func isTransientError(_ error: URLError) -> Bool {
+        switch error.code {
+        case .timedOut, .cannotConnectToHost, .networkConnectionLost,
+             .notConnectedToInternet, .dnsLookupFailed:
+            return true
+        default:
+            return false
+        }
+    }
     
     // MARK: - Récupération des recettes
     
@@ -48,61 +87,67 @@ class PostgreSQLService {
         return try await fetchRecettes(page: 1, limit: 50)
     }
 
-    /// Recupere les recettes avec pagination
+    /// Recupere les recettes avec pagination (avec retry automatique)
     func fetchRecettes(page: Int, limit: Int = 20) async throws -> [MarmitonRecette] {
-        var components = URLComponents(string: "\(baseURL)/recettes")
-        components?.queryItems = [
-            URLQueryItem(name: "page", value: String(page)),
-            URLQueryItem(name: "limit", value: String(limit))
-        ]
+        return try await executeWithRetry {
+            var components = URLComponents(string: "\(self.baseURL)/recettes")
+            components?.queryItems = [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "limit", value: String(limit))
+            ]
 
-        guard let url = components?.url else {
-            throw PostgreSQLError.invalidURL
+            guard let url = components?.url else {
+                throw PostgreSQLError.invalidURL
+            }
+
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                throw PostgreSQLError.invalidResponse
+            }
+
+            return try self.decoder.decode([MarmitonRecette].self, from: data)
         }
-
-        let (data, response) = try await URLSession.shared.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw PostgreSQLError.invalidResponse
-        }
-
-        return try decoder.decode([MarmitonRecette].self, from: data)
     }
     
-    /// Récupère une recette par son ID
+    /// Récupère une recette par son ID (avec retry automatique)
     func fetchRecette(id: Int) async throws -> MarmitonRecette {
-        guard let url = URL(string: "\(baseURL)/recettes/\(id)") else {
-            throw PostgreSQLError.invalidURL
+        return try await executeWithRetry {
+            guard let url = URL(string: "\(self.baseURL)/recettes/\(id)") else {
+                throw PostgreSQLError.invalidURL
+            }
+
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                throw PostgreSQLError.invalidResponse
+            }
+
+            return try self.decoder.decode(MarmitonRecette.self, from: data)
         }
-        
-        let (data, response) = try await URLSession.shared.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw PostgreSQLError.invalidResponse
-        }
-        
-        return try decoder.decode(MarmitonRecette.self, from: data)
     }
     
-    /// Recherche des recettes par mot-clé
+    /// Recherche des recettes par mot-clé (avec retry automatique)
     func searchRecettes(query: String) async throws -> [MarmitonRecette] {
-        var components = URLComponents(string: "\(baseURL)/recettes/search")
-        components?.queryItems = [URLQueryItem(name: "q", value: query)]
-        
-        guard let url = components?.url else {
-            throw PostgreSQLError.invalidURL
+        return try await executeWithRetry {
+            var components = URLComponents(string: "\(self.baseURL)/recettes/search")
+            components?.queryItems = [URLQueryItem(name: "q", value: query)]
+
+            guard let url = components?.url else {
+                throw PostgreSQLError.invalidURL
+            }
+
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                throw PostgreSQLError.invalidResponse
+            }
+
+            return try self.decoder.decode([MarmitonRecette].self, from: data)
         }
-        
-        let (data, response) = try await URLSession.shared.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw PostgreSQLError.invalidResponse
-        }
-        
-        return try decoder.decode([MarmitonRecette].self, from: data)
     }
     
     // MARK: - Conversion vers le modèle local
