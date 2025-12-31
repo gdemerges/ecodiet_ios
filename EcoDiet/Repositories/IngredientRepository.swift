@@ -39,7 +39,7 @@ class IngredientRepository: IngredientRepositoryProtocol {
         do {
             ingredients = try modelContext.fetch(descriptor)
         } catch {
-            print("Error loading ingredients: \(error)")
+            Logger.dataError("Erreur lors du chargement des ingrédients", error: error)
         }
         isLoaded = true
     }

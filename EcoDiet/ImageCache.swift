@@ -109,7 +109,7 @@ actor ImageCacheService {
 
             return image
         } catch {
-            print("Erreur téléchargement image: \(error)")
+            Logger.networkError("Erreur téléchargement image", error: error)
             return nil
         }
     }

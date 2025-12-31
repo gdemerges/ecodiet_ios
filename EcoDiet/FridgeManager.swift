@@ -57,7 +57,7 @@ class FridgeManager {
                 fridgeIngredientsCache.insert(ingredient.name.lowercased())
             }
         } catch {
-            print("Erreur lors de la sauvegarde de l'ingredient: \(error)")
+            Logger.dataError("Erreur lors de la sauvegarde de l'ingrédient", error: error)
         }
     }
 
@@ -68,7 +68,7 @@ class FridgeManager {
             // Mise à jour du cache
             fridgeIngredientsCache.remove(ingredient.name.lowercased())
         } catch {
-            print("Erreur lors de la suppression de l'ingredient: \(error)")
+            Logger.dataError("Erreur lors de la suppression de l'ingrédient", error: error)
         }
     }
 
@@ -83,7 +83,7 @@ class FridgeManager {
                 fridgeIngredientsCache.remove(ingredient.name.lowercased())
             }
         } catch {
-            print("Erreur lors de la mise a jour de l'ingredient: \(error)")
+            Logger.dataError("Erreur lors de la mise à jour de l'ingrédient", error: error)
         }
     }
 
@@ -100,7 +100,7 @@ class FridgeManager {
                 fridgeIngredientsCache.remove(ingredient.name.lowercased())
             }
         } catch {
-            print("Erreur lors de la mise a jour du statut: \(error)")
+            Logger.dataError("Erreur lors de la mise à jour du statut", error: error)
         }
     }
 

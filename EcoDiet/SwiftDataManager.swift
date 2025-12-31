@@ -82,7 +82,7 @@ class SwiftDataManager {
             let profiles = try modelContext.fetch(descriptor)
             userProfile = profiles.first
         } catch {
-            print("Erreur lors du chargement du profil utilisateur: \(error)")
+            Logger.dataError("Erreur lors du chargement du profil utilisateur", error: error)
         }
     }
     
@@ -91,7 +91,7 @@ class SwiftDataManager {
         do {
             recipes = try modelContext.fetch(descriptor)
         } catch {
-            print("Erreur lors du chargement des recettes: \(error)")
+            Logger.dataError("Erreur lors du chargement des recettes", error: error)
         }
     }
     
@@ -125,7 +125,7 @@ class SwiftDataManager {
             do {
                 try modelContext.save()
             } catch {
-                print("Erreur lors de la migration des couleurs des dossiers: \(error)")
+                Logger.dataError("Erreur lors de la migration des couleurs des dossiers", error: error)
             }
         }
     }
@@ -178,7 +178,7 @@ class SwiftDataManager {
             // Créer les dossiers par défaut après avoir sauvegardé le profil
             createDefaultFolders()
         } catch {
-            print("Erreur lors de la création du profil par défaut: \(error)")
+            Logger.dataError("Erreur lors de la création du profil par défaut", error: error)
         }
     }
     
@@ -369,7 +369,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de la création des recettes par défaut: \(error)")
+            Logger.dataError("Erreur lors de la création des recettes par défaut", error: error)
         }
     }
     
@@ -392,7 +392,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de la création des dossiers par défaut: \(error)")
+            Logger.dataError("Erreur lors de la création des dossiers par défaut", error: error)
         }
     }
     
@@ -416,7 +416,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de la création du profil: \(error)")
+            Logger.dataError("Erreur lors de la création du profil", error: error)
         }
     }
     
@@ -452,7 +452,7 @@ class SwiftDataManager {
             profile.cookingLevel = originalCookingLevel
             profile.dietaryPreferences = originalPreferences
             profile.allergies = originalAllergies
-            print("Erreur lors de la mise à jour du profil: \(error)")
+            Logger.dataError("Erreur lors de la mise à jour du profil", error: error)
             throw error
         }
     }
@@ -513,7 +513,7 @@ class SwiftDataManager {
             do {
                 try modelContext.save()
             } catch {
-                print("Erreur lors de l'ajout aux favoris: \(error)")
+                Logger.dataError("Erreur lors de l'ajout aux favoris", error: error)
             }
         }
     }
@@ -526,7 +526,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de la suppression des favoris: \(error)")
+            Logger.dataError("Erreur lors de la suppression des favoris", error: error)
         }
     }
     
@@ -542,7 +542,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de l'ajout de la recette: \(error)")
+            Logger.dataError("Erreur lors de l'ajout de la recette", error: error)
         }
     }
     
@@ -556,7 +556,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de la suppression de la recette: \(error)")
+            Logger.dataError("Erreur lors de la suppression de la recette", error: error)
         }
     }
     
@@ -572,7 +572,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de l'ajout du dossier: \(error)")
+            Logger.dataError("Erreur lors de l'ajout du dossier", error: error)
         }
     }
     
@@ -584,7 +584,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de la suppression du dossier: \(error)")
+            Logger.dataError("Erreur lors de la suppression du dossier", error: error)
         }
     }
     
@@ -594,7 +594,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de l'ajout de la recette au dossier: \(error)")
+            Logger.dataError("Erreur lors de l'ajout de la recette au dossier", error: error)
         }
     }
     
@@ -604,7 +604,7 @@ class SwiftDataManager {
         do {
             try modelContext.save()
         } catch {
-            print("Erreur lors de la suppression de la recette du dossier: \(error)")
+            Logger.dataError("Erreur lors de la suppression de la recette du dossier", error: error)
         }
     }
     
@@ -613,43 +613,49 @@ class SwiftDataManager {
     }
     
     // MARK: - Recommandations personnalisées
+
+    /// Retourne les recettes recommandées basées sur les préférences utilisateur
+    /// Optimisé avec des Sets pour des recherches O(1) au lieu de O(n*m)
     func getRecommendedRecipes() -> [Recipe] {
         guard let profile = userProfile else {
             return recipes
         }
-        
+
         let preferences = profile.dietaryPreferences
-        
+
         // Si l'utilisateur n'a pas de préférences, retourner toutes les recettes
         if preferences.isEmpty {
             return recipes
         }
-        
-        // Filtrer les recettes qui correspondent aux préférences alimentaires
+
+        // Convertir en Set pour des recherches O(1)
+        let preferencesSet = Set(preferences)
+
+        // Pré-calculer les cas spéciaux une seule fois
+        let isOmnivore = preferencesSet.contains("Omnivore")
+        let acceptsVegetarian = preferencesSet.contains("Vegan") ||
+                                preferencesSet.contains("Végétarien") ||
+                                preferencesSet.contains("Flexitarien")
+
+        // Si omnivore, retourner toutes les recettes
+        if isOmnivore {
+            return recipes
+        }
+
+        // Filtrer les recettes avec des opérations Set O(1)
         return recipes.filter { recipe in
-            // Vérifier si la recette correspond à au moins une préférence de l'utilisateur
-            for preference in preferences {
-                if recipe.dietaryTags.contains(preference) {
-                    return true
-                }
-                
-                // Cas spéciaux
-                // Si l'utilisateur est vegan, il peut manger végétarien
-                if preference == "Vegan" && recipe.dietaryTags.contains("Végétarien") {
-                    return true
-                }
-                
-                // Si l'utilisateur est végétarien ou flexitarien, il peut manger végétarien
-                if (preference == "Végétarien" || preference == "Flexitarien") && 
-                   recipe.dietaryTags.contains("Végétarien") {
-                    return true
-                }
-                
-                // Si l'utilisateur est omnivore, il peut manger toutes les recettes sauf vegan strictes
-                if preference == "Omnivore" {
-                    return true
-                }
+            let recipeTags = Set(recipe.dietaryTags)
+
+            // Vérifier l'intersection directe (O(min(n,m)))
+            if !preferencesSet.isDisjoint(with: recipeTags) {
+                return true
             }
+
+            // Cas spécial: accepte les recettes végétariennes
+            if acceptsVegetarian && recipeTags.contains("Végétarien") {
+                return true
+            }
+
             return false
         }
     }
@@ -673,7 +679,7 @@ class SwiftDataManager {
             folders = []
             loadData()
         } catch {
-            print("Erreur lors de la suppression des données: \(error)")
+            Logger.dataError("Erreur lors de la suppression des données", error: error)
         }
     }
 }

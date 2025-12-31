@@ -12,24 +12,43 @@ struct FridgeView: View {
     @State private var showingCategoryPicker = false
     @State private var searchDebouncer = Debouncer(delay: 0.3)
 
-    var filteredIngredients: [Ingredient] {
-        let filtered = debouncedSearchText.isEmpty ? fridgeManager.ingredients : fridgeManager.ingredients.filter { ingredient in
-            ingredient.name.localizedCaseInsensitiveContains(debouncedSearchText)
+    /// Résultat du filtrage optimisé en une seule passe
+    private var filteredResults: (inFridge: [Ingredient], notInFridge: [Ingredient]) {
+        var inFridge: [Ingredient] = []
+        var notInFridge: [Ingredient] = []
+
+        for ingredient in fridgeManager.ingredients {
+            // Filtre par texte de recherche
+            if !debouncedSearchText.isEmpty {
+                guard ingredient.name.localizedCaseInsensitiveContains(debouncedSearchText) else {
+                    continue
+                }
+            }
+
+            // Filtre par catégorie
+            if let category = selectedCategory {
+                guard ingredient.category == category else {
+                    continue
+                }
+            }
+
+            // Répartir dans les bonnes listes
+            if ingredient.isInFridge {
+                inFridge.append(ingredient)
+            } else {
+                notInFridge.append(ingredient)
+            }
         }
 
-        if let category = selectedCategory {
-            return filtered.filter { $0.category == category }
-        }
-
-        return filtered
+        return (inFridge, notInFridge)
     }
 
     var ingredientsInFridge: [Ingredient] {
-        filteredIngredients.filter { $0.isInFridge }
+        filteredResults.inFridge
     }
 
     var ingredientsNotInFridge: [Ingredient] {
-        filteredIngredients.filter { !$0.isInFridge }
+        filteredResults.notInFridge
     }
 
     var body: some View {

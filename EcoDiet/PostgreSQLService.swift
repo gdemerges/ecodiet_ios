@@ -60,7 +60,7 @@ class PostgreSQLService {
                 lastError = error
                 let delay = initialRetryDelay * UInt64(1 << attempt) // Exponential backoff
                 try? await Task.sleep(nanoseconds: delay)
-                print("Retry \(attempt + 1)/\(maxRetries) après erreur: \(error.localizedDescription)")
+                Logger.networkInfo("Retry \(attempt + 1)/\(maxRetries) après erreur: \(error.localizedDescription)")
             } catch {
                 throw error // Non-transient error, don't retry
             }
