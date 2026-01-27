@@ -50,14 +50,32 @@ struct ListView: View {
     
     @ViewBuilder
     private func recipeIcon(for recipe: Recipe) -> some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(.ultraThinMaterial)
+        if recipe.imageName.starts(with: "http://") || recipe.imageName.starts(with: "https://") {
+            // Image depuis URL (PostgreSQL)
+            CachedAsyncImage(url: URL(string: recipe.imageName)) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        ProgressView()
+                    }
+            }
             .frame(width: 48, height: 48)
-            .overlay(
-                Image(systemName: recipe.imageName)
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-            )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        } else {
+            // SF Symbol
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .frame(width: 48, height: 48)
+                .overlay(
+                    Image(systemName: recipe.imageName)
+                        .font(.title3)
+                        .foregroundStyle(.tint)
+                )
+        }
     }
     
     @ViewBuilder

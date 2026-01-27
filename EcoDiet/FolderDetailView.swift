@@ -143,31 +143,58 @@ struct EnhancedRecipeRowView: View {
         HStack(spacing: 14) {
             // Image/icône de la recette
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.95, green: 0.97, blue: 0.95),
-                                Color(red: 0.92, green: 0.95, blue: 0.92)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                if recipe.imageName.starts(with: "http://") || recipe.imageName.starts(with: "https://") {
+                    // Image depuis URL (PostgreSQL)
+                    CachedAsyncImage(url: URL(string: recipe.imageName)) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.95, green: 0.97, blue: 0.95),
+                                        Color(red: 0.92, green: 0.95, blue: 0.92)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay {
+                                ProgressView()
+                            }
+                    }
                     .frame(width: 60, height: 60)
-                
-                Image(systemName: recipe.imageName)
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.3, green: 0.6, blue: 0.4),
-                                Color(red: 0.2, green: 0.5, blue: 0.5)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                } else {
+                    // SF Symbol
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.95, green: 0.97, blue: 0.95),
+                                    Color(red: 0.92, green: 0.95, blue: 0.92)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
+                        .frame(width: 60, height: 60)
+
+                    Image(systemName: recipe.imageName)
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.3, green: 0.6, blue: 0.4),
+                                    Color(red: 0.2, green: 0.5, blue: 0.5)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -475,13 +502,31 @@ struct RecipeSelectionRow: View {
     
     private var recipeImageView: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(recipeImageGradient)
+            if recipe.imageName.starts(with: "http://") || recipe.imageName.starts(with: "https://") {
+                // Image depuis URL (PostgreSQL)
+                CachedAsyncImage(url: URL(string: recipe.imageName)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(recipeImageGradient)
+                        .overlay {
+                            ProgressView()
+                        }
+                }
                 .frame(width: 60, height: 60)
-            
-            Image(systemName: recipe.imageName)
-                .font(.system(size: 24, weight: .medium))
-                .foregroundStyle(recipeIconGradient)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else {
+                // SF Symbol
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(recipeImageGradient)
+                    .frame(width: 60, height: 60)
+
+                Image(systemName: recipe.imageName)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(recipeIconGradient)
+            }
         }
     }
     

@@ -431,19 +431,33 @@ struct FavoriteRecipeCard: View {
                 // Icône
                 VStack {
                     Spacer()
-                    Image(systemName: recipe.imageName)
-                        .font(.system(size: 36, weight: .medium))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.3, green: 0.6, blue: 0.4),
-                                    Color(red: 0.2, green: 0.5, blue: 0.5)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                    if recipe.imageName.starts(with: "http://") || recipe.imageName.starts(with: "https://") {
+                        // Image depuis URL (PostgreSQL)
+                        CachedAsyncImage(url: URL(string: recipe.imageName)) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } placeholder: {
+                            ProgressView()
+                        }
+                        .frame(width: 180, height: 120)
                         .scaleEffect(isAppearing ? 1.0 : 0.8)
+                    } else {
+                        // SF Symbol
+                        Image(systemName: recipe.imageName)
+                            .font(.system(size: 36, weight: .medium))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.3, green: 0.6, blue: 0.4),
+                                        Color(red: 0.2, green: 0.5, blue: 0.5)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .scaleEffect(isAppearing ? 1.0 : 0.8)
+                    }
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)

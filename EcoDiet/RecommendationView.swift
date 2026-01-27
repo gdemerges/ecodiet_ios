@@ -79,33 +79,60 @@ struct CompactRecipeCard: View {
         VStack(spacing: 0) {
             // Section image/icône
             ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.95, green: 0.97, blue: 0.95),
-                                Color(red: 0.92, green: 0.95, blue: 0.92)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(height: 120)
-                    .overlay(
-                        Image(systemName: recipe.imageName)
-                            .font(.system(size: 36, weight: .medium))
-                            .foregroundStyle(
+                if recipe.imageName.starts(with: "http://") || recipe.imageName.starts(with: "https://") {
+                    // Image depuis URL (PostgreSQL)
+                    CachedAsyncImage(url: URL(string: recipe.imageName)) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 0.3, green: 0.6, blue: 0.4),
-                                        Color(red: 0.2, green: 0.5, blue: 0.5)
+                                        Color(red: 0.95, green: 0.97, blue: 0.95),
+                                        Color(red: 0.92, green: 0.95, blue: 0.92)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
-                    )
-                
+                            .overlay {
+                                ProgressView()
+                            }
+                    }
+                    .frame(height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                } else {
+                    // SF Symbol
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.95, green: 0.97, blue: 0.95),
+                                    Color(red: 0.92, green: 0.95, blue: 0.92)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(height: 120)
+                        .overlay(
+                            Image(systemName: recipe.imageName)
+                                .font(.system(size: 36, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.3, green: 0.6, blue: 0.4),
+                                            Color(red: 0.2, green: 0.5, blue: 0.5)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        )
+                }
+
                 // Badge Eco-Score
                 EcoScoreBadge(ecoScore: recipe.ecoScore, size: .small)
                     .padding(8)
