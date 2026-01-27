@@ -89,8 +89,6 @@ struct HomeView: View {
 
                 Spacer()
 
-                PostgreSQLImportButton(dataManager: dataManager)
-
                 NavigationLink {
                     ListView(profileManager: profileManager, dataManager: dataManager)
                 } label: {
@@ -169,12 +167,30 @@ struct RecipeCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             ZStack {
-                // Fond neutre pour l'image
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.primary.opacity(0.05))
+                // Image de la recette
+                if recipe.imageName.starts(with: "http://") || recipe.imageName.starts(with: "https://") {
+                    // Image depuis URL (PostgreSQL)
+                    CachedAsyncImage(url: URL(string: recipe.imageName)) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(Color.primary.opacity(0.05))
+                    }
                     .frame(width: 240, height: 160)
-                
-                // TODO: Image de la recette sera affichée ici
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                } else {
+                    // Fond neutre pour SF Symbol
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(Color.primary.opacity(0.05))
+                        .frame(width: 240, height: 160)
+                        .overlay {
+                            Image(systemName: recipe.imageName)
+                                .font(.system(size: 40, weight: .light))
+                                .foregroundStyle(.primary.opacity(0.3))
+                        }
+                }
                 
                 // Badge temps en haut à droite
                 VStack {

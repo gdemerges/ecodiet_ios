@@ -44,6 +44,9 @@ class SwiftDataManager {
     private let defaultDataService: DefaultDataService
     internal let recommendationService: RecommendationService
 
+    // Service PostgreSQL pour charger les recettes
+    let postgreSQLService = PostgreSQLService()
+
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
 
@@ -68,9 +71,8 @@ class SwiftDataManager {
             createDefaultUserProfile()
         }
         
-        if recipes.isEmpty {
-            createDefaultRecipes()
-        }
+        // Les recettes seront chargées depuis PostgreSQL via loadPostgreSQLRecipes()
+        // Ne plus créer de recettes en dur ici
         
         // Ne plus créer automatiquement les dossiers par défaut
         // L'utilisateur devra les créer lui-même
@@ -182,7 +184,48 @@ class SwiftDataManager {
         }
     }
     
-    private func createDefaultRecipes() {
+    /// Charge les recettes depuis PostgreSQL
+    func loadPostgreSQLRecipes() async {
+        // Ne charger que si la base est vide pour éviter les doublons
+        guard recipes.isEmpty else {
+            print("[Data] Recettes déjà chargées (\(recipes.count) recettes)")
+            return
+        }
+
+        print("[Data] Chargement des recettes depuis PostgreSQL...")
+
+        do {
+            // Charger toutes les recettes depuis PostgreSQL (pagination automatique)
+            let marmitonRecettes = try await postgreSQLService.fetchRecettes(page: 1, limit: 50)
+
+            print("[Data] ✅ \(marmitonRecettes.count) recettes PostgreSQL récupérées")
+
+            // Convertir et sauvegarder les recettes
+            for marmitonRecette in marmitonRecettes {
+                let recipe = postgreSQLService.convertToLocalRecipe(marmitonRecette)
+                modelContext.insert(recipe)
+                recipes.append(recipe)
+            }
+
+            // Sauvegarder dans SwiftData
+            try modelContext.save()
+
+            // Ajouter quelques recettes aux favoris du profil par défaut
+            if let profile = userProfile, !recipes.isEmpty {
+                profile.favoriteRecipes = Array(recipes.prefix(3))
+                try modelContext.save()
+            }
+
+            print("[Data] ✅ Recettes PostgreSQL chargées avec succès dans SwiftData")
+        } catch {
+            Logger.dataError("❌ Erreur lors du chargement des recettes PostgreSQL", error: error)
+            // En cas d'erreur, créer quelques recettes par défaut
+            createDefaultRecipes_OLD()
+        }
+    }
+
+    // ANCIENNE FONCTION - Conservée en fallback
+    private func createDefaultRecipes_OLD() {
         // Bowl veggie
         let bowlVeggie = Recipe(
             title: "Bowl veggie",

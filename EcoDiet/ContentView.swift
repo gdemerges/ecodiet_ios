@@ -80,8 +80,13 @@ struct ContentView: View {
                 }
             }
         }
-        .onAppear {
+        .task {
             setupDataManager()
+
+            // Charger les recettes PostgreSQL au démarrage
+            if let dataManager = dataManager {
+                await dataManager.loadPostgreSQLRecipes()
+            }
         }
     }
     

@@ -8,12 +8,12 @@ struct MarmitonRecette: Codable, Identifiable {
     let titre: String?
     let photo: String?
     let duree: String?
-    let ingredients: [MarmitonIngredient]?
+    let ingredients: [String]?  // Tableau de strings, pas d'objets
     let ustensiles: [String]?
     let etapes: [String]?
     let createdAt: Date?
     let updatedAt: Date?
-    
+
     enum CodingKeys: String, CodingKey {
         case id, url, titre, photo, duree, ingredients, ustensiles, etapes
         case createdAt = "created_at"
@@ -25,6 +25,20 @@ struct MarmitonIngredient: Codable {
     let nom: String
     let quantite: String?
     let unite: String?
+
+    // Initializer pour créer depuis une string
+    init(fromString string: String) {
+        // Parser "2 kg de tomates" en nom/quantite/unite
+        self.nom = string
+        self.quantite = nil
+        self.unite = nil
+    }
+
+    init(nom: String, quantite: String?, unite: String?) {
+        self.nom = nom
+        self.quantite = quantite
+        self.unite = unite
+    }
 }
 
 // MARK: - Service de connexion PostgreSQL
@@ -32,7 +46,7 @@ struct MarmitonIngredient: Codable {
 @Observable
 class PostgreSQLService {
     // URL de votre API backend (vous devrez créer cette API)
-    private let baseURL = "http://localhost:3000/api"
+    private let baseURL = "http://localhost:3001/api"
 
     // Configuration du retry pour les erreurs réseau transitoires
     private let maxRetries = 3
@@ -41,7 +55,32 @@ class PostgreSQLService {
     // Configuration du décodeur JSON
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+
+        // Formatter personnalisé pour gérer les millisecondes dans les dates ISO8601
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+
+            // Essayer d'abord avec les millisecondes
+            if let date = formatter.date(from: dateString) {
+                return date
+            }
+
+            // Fallback sans millisecondes
+            formatter.formatOptions = [.withInternetDateTime]
+            if let date = formatter.date(from: dateString) {
+                return date
+            }
+
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Date invalide: \(dateString)"
+            )
+        }
+
         return decoder
     }()
 
@@ -154,12 +193,13 @@ class PostgreSQLService {
     
     /// Convertit une recette PostgreSQL en modèle Recipe local
     func convertToLocalRecipe(_ marmitonRecette: MarmitonRecette) -> Recipe {
-        // Conversion des ingrédients
-        let recipeIngredients = (marmitonRecette.ingredients ?? []).map { ingredient in
-            RecipeIngredient(
-                name: ingredient.nom,
-                quantity: parseQuantity(ingredient.quantite),
-                unit: ingredient.unite ?? "",
+        // Conversion des ingrédients (depuis strings)
+        let recipeIngredients = (marmitonRecette.ingredients ?? []).map { ingredientString in
+            let parsedIngredient = parseIngredientString(ingredientString)
+            return RecipeIngredient(
+                name: parsedIngredient.nom,
+                quantity: parseQuantity(parsedIngredient.quantite),
+                unit: parsedIngredient.unite ?? "",
                 isOptional: false
             )
         }
@@ -203,14 +243,25 @@ class PostgreSQLService {
     
     // MARK: - Fonctions utilitaires
     
+    /// Parse une string d'ingrédient "2 kg de tomates" en objet MarmitonIngredient
+    private func parseIngredientString(_ ingredientString: String) -> MarmitonIngredient {
+        // Pour l'instant, on garde la string complète comme nom
+        // Vous pouvez améliorer ce parser pour extraire quantité et unité
+        return MarmitonIngredient(
+            nom: ingredientString,
+            quantite: nil,
+            unite: nil
+        )
+    }
+
     private func parseQuantity(_ quantiteString: String?) -> Double {
         guard let quantite = quantiteString else { return 0 }
-        
+
         // Enlever les caractères non numériques et essayer de parser
         let numericString = quantite.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
         return Double(numericString) ?? 0
     }
-    
+
     private func parsePreparationTime(_ duree: String?) -> Int {
         guard let duree = duree?.lowercased() else { return 30 }
         
@@ -258,11 +309,11 @@ class PostgreSQLService {
         return max(100, totalFootprint) // Minimum 100g CO2eq
     }
     
-    private func detectDietaryTags(ingredients: [MarmitonIngredient]?) -> [String] {
+    private func detectDietaryTags(ingredients: [String]?) -> [String] {
         guard let ingredients = ingredients else { return [] }
-        
+
         var tags: [String] = []
-        let ingredientNames = ingredients.map { $0.nom.lowercased() }
+        let ingredientNames = ingredients.map { $0.lowercased() }
         
         // Vérifier si c'est végétarien
         let hasAnimalProducts = ingredientNames.contains { name in
@@ -299,11 +350,11 @@ class PostgreSQLService {
         return tags
     }
     
-    private func detectAllergens(ingredients: [MarmitonIngredient]?) -> [String] {
+    private func detectAllergens(ingredients: [String]?) -> [String] {
         guard let ingredients = ingredients else { return [] }
-        
+
         var allergens: [String] = []
-        let ingredientNames = ingredients.map { $0.nom.lowercased() }
+        let ingredientNames = ingredients.map { $0.lowercased() }
         
         if ingredientNames.contains(where: { $0.contains("gluten") || $0.contains("farine") || $0.contains("blé") }) {
             allergens.append("Gluten")

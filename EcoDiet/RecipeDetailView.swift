@@ -48,13 +48,13 @@ struct RecipeDetailView: View {
                             .padding(.vertical, 8)
 
                         // Ingrédients
-                        RecipeIngredientsSection(ingredients: sampleIngredients)
+                        RecipeIngredientsSection(ingredients: formattedIngredients)
 
                         Divider()
                             .padding(.vertical, 8)
 
                         // Instructions
-                        RecipeInstructionsSection(instructions: sampleInstructions)
+                        RecipeInstructionsSection(instructions: recipe.etapes.isEmpty ? sampleInstructions : recipe.etapes)
 
                         // Boutons d'action
                         RecipeActionButtons(
@@ -122,6 +122,30 @@ struct RecipeDetailView: View {
                 }
             }
         }
+    }
+
+    // Formatte les ingrédients pour l'affichage
+    private var formattedIngredients: [String] {
+        // Utiliser les vrais ingrédients si disponibles
+        if !recipe.requiredIngredients.isEmpty {
+            return recipe.requiredIngredients.map { ingredient in
+                let quantityStr = ingredient.quantity > 0 ? "\(Int(ingredient.quantity))" : ""
+                let unitStr = ingredient.unit.isEmpty ? "" : ingredient.unit
+                let optional = ingredient.isOptional ? " (optionnel)" : ""
+
+                if quantityStr.isEmpty && unitStr.isEmpty {
+                    return "\(ingredient.name)\(optional)"
+                } else if quantityStr.isEmpty {
+                    return "\(unitStr) de \(ingredient.name)\(optional)"
+                } else if unitStr.isEmpty {
+                    return "\(quantityStr) \(ingredient.name)\(optional)"
+                } else {
+                    return "\(quantityStr)\(unitStr) de \(ingredient.name)\(optional)"
+                }
+            }
+        }
+        // Fallback sur les données d'exemple
+        return sampleIngredients
     }
 
     // Texte de partage pour la recette
