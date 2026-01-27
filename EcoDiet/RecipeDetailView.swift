@@ -54,7 +54,7 @@ struct RecipeDetailView: View {
                             .padding(.vertical, 8)
 
                         // Instructions
-                        RecipeInstructionsSection(instructions: recipe.etapes.isEmpty ? sampleInstructions : recipe.etapes)
+                        RecipeInstructionsSection(instructions: formattedInstructions)
 
                         // Boutons d'action
                         RecipeActionButtons(
@@ -122,6 +122,61 @@ struct RecipeDetailView: View {
                 }
             }
         }
+    }
+
+    // Formatte les instructions pour l'affichage
+    private var formattedInstructions: [String] {
+        // Utiliser les vraies instructions si disponibles
+        if !recipe.etapes.isEmpty {
+            var steps: [String] = []
+
+            for etape in recipe.etapes {
+                // Ignorer la première ligne qui contient juste les infos de temps
+                if etape.starts(with: "Préparation") {
+                    continue
+                }
+
+                // Diviser par "Étape X" pour séparer les étapes
+                let components = etape.components(separatedBy: "\n")
+                var currentStep = ""
+
+                for component in components {
+                    let trimmed = component.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if trimmed.isEmpty { continue }
+
+                    // Si c'est le début d'une nouvelle étape (commence par "Étape X")
+                    if trimmed.range(of: "^Étape \\d+", options: .regularExpression) != nil {
+                        // Sauvegarder l'étape précédente si elle existe
+                        if !currentStep.isEmpty {
+                            steps.append(currentStep)
+                        }
+                        // Commencer une nouvelle étape (retirer "Étape X ")
+                        currentStep = trimmed.replacingOccurrences(
+                            of: "^Étape \\d+ ",
+                            with: "",
+                            options: .regularExpression
+                        )
+                    } else {
+                        // Ajouter à l'étape courante
+                        if !currentStep.isEmpty {
+                            currentStep += " " + trimmed
+                        } else {
+                            currentStep = trimmed
+                        }
+                    }
+                }
+
+                // Ajouter la dernière étape
+                if !currentStep.isEmpty {
+                    steps.append(currentStep)
+                }
+            }
+
+            return steps.isEmpty ? sampleInstructions : steps
+        }
+
+        // Fallback sur les données d'exemple
+        return sampleInstructions
     }
 
     // Formatte les ingrédients pour l'affichage
