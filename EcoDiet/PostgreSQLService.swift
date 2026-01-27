@@ -245,12 +245,31 @@ class PostgreSQLService {
     
     /// Parse une string d'ingrédient "2 kg de tomates" en objet MarmitonIngredient
     private func parseIngredientString(_ ingredientString: String) -> MarmitonIngredient {
-        // Pour l'instant, on garde la string complète comme nom
-        // Vous pouvez améliorer ce parser pour extraire quantité et unité
+        // Extraire le premier nombre de la string
+        let numbers = ingredientString.components(separatedBy: CharacterSet.decimalDigits.inverted)
+            .filter { !$0.isEmpty }
+
+        let quantityString = numbers.first
+
+        // Détecter les unités courantes
+        let unitsPattern = "(kg|g|ml|cl|l|cuillères?|c\\.|pièces?|tranches?|sachets?)"
+        let unite: String?
+        if ingredientString.range(of: unitsPattern, options: .regularExpression) != nil {
+            if ingredientString.contains("kg") { unite = "kg" }
+            else if ingredientString.contains(" g") || ingredientString.contains("grammes") { unite = "g" }
+            else if ingredientString.contains("ml") { unite = "ml" }
+            else if ingredientString.contains("cl") { unite = "cl" }
+            else if ingredientString.contains(" l") || ingredientString.contains("litre") { unite = "l" }
+            else if ingredientString.contains("cuillère") || ingredientString.contains("c.") { unite = "c." }
+            else { unite = nil }
+        } else {
+            unite = nil
+        }
+
         return MarmitonIngredient(
             nom: ingredientString,
-            quantite: nil,
-            unite: nil
+            quantite: quantityString,
+            unite: unite
         )
     }
 
@@ -283,30 +302,41 @@ class PostgreSQLService {
     }
     
     private func estimateCarbonFootprint(ingredients: [RecipeIngredient]) -> Double {
-        // Empreinte carbone estimée basée sur le nombre d'ingrédients
-        // Vous pouvez affiner cela avec une base de données d'empreintes carbone
+        // Empreinte carbone estimée basée sur les ingrédients
         var totalFootprint = 0.0
-        
+
         for ingredient in ingredients {
             let name = ingredient.name.lowercased()
-            
-            // Estimations approximatives en g CO2eq
+            let quantity = max(ingredient.quantity, 1.0) // Au moins 1 si 0
+
+            // Estimations approximatives en g CO2eq par ingrédient/portion
             if name.contains("boeuf") || name.contains("veau") {
-                totalFootprint += 2700 * ingredient.quantity
-            } else if name.contains("poulet") || name.contains("volaille") {
-                totalFootprint += 690 * ingredient.quantity
-            } else if name.contains("poisson") {
-                totalFootprint += 500 * ingredient.quantity
-            } else if name.contains("fromage") {
-                totalFootprint += 1150 * ingredient.quantity
-            } else if name.contains("légume") || name.contains("fruit") {
-                totalFootprint += 50 * ingredient.quantity
+                totalFootprint += 2700 * quantity * 0.1 // Facteur 0.1 pour portion standard
+            } else if name.contains("poulet") || name.contains("volaille") || name.contains("canard") {
+                totalFootprint += 690 * quantity * 0.1
+            } else if name.contains("poisson") || name.contains("saumon") || name.contains("thon") {
+                totalFootprint += 500 * quantity * 0.1
+            } else if name.contains("porc") || name.contains("jambon") || name.contains("lard") || name.contains("cochon") {
+                totalFootprint += 1200 * quantity * 0.1
+            } else if name.contains("fromage") || name.contains("parmesan") || name.contains("cheddar") {
+                totalFootprint += 1150 * quantity * 0.1
+            } else if name.contains("lait") || name.contains("crème") || name.contains("beurre") {
+                totalFootprint += 300 * quantity * 0.1
+            } else if name.contains("oeuf") {
+                totalFootprint += 450 * quantity * 0.5
+            } else if name.contains("légume") || name.contains("salade") || name.contains("tomate") ||
+                      name.contains("carotte") || name.contains("oignon") || name.contains("ail") {
+                totalFootprint += 50 * quantity * 0.1
+            } else if name.contains("fruit") {
+                totalFootprint += 60 * quantity * 0.1
+            } else if name.contains("riz") || name.contains("pâtes") || name.contains("pain") {
+                totalFootprint += 150 * quantity * 0.1
             } else {
-                totalFootprint += 200 * ingredient.quantity // Valeur par défaut
+                totalFootprint += 100 // Valeur par défaut par ingrédient
             }
         }
-        
-        return max(100, totalFootprint) // Minimum 100g CO2eq
+
+        return max(200, totalFootprint) // Minimum 200g CO2eq
     }
     
     private func detectDietaryTags(ingredients: [String]?) -> [String] {
