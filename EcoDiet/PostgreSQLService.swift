@@ -46,7 +46,7 @@ struct MarmitonIngredient: Codable {
 @Observable
 class PostgreSQLService {
     // URL de votre API backend (vous devrez créer cette API)
-    private let baseURL = "http://localhost:3001/api"
+    private let baseURL = "http://localhost:3002/api"
 
     // Configuration du retry pour les erreurs réseau transitoires
     private let maxRetries = 3
@@ -344,39 +344,94 @@ class PostgreSQLService {
 
         var tags: [String] = []
         let ingredientNames = ingredients.map { $0.lowercased() }
-        
+
+        // Liste étendue de produits animaux (viandes, poissons, fruits de mer)
+        let meatKeywords = [
+            // Viandes rouges - Base
+            "viande", "boeuf", "bœuf", "veau", "agneau", "mouton", "chevreau",
+            // Viandes rouges - Morceaux et préparations
+            "rosbif", "rôti", "côte", "entrecôte", "filet mignon", "gigot", "épaule",
+            "paleron", "bourguignon", "pot-au-feu", "blanquette", "daube", "carbonade",
+            // Viandes blanches - Base
+            "poulet", "poule", "dinde", "canard", "oie", "pintade", "volaille",
+            // Viandes blanches - Morceaux
+            "cuisse", "blanc de poulet", "escalope", "aile", "magret", "confit",
+            // Porc
+            "porc", "cochon", "jambon", "lard", "lardon", "bacon", "saucisse", "saucisson",
+            "chorizo", "pancetta", "coppa", "chipolata", "merguez", "échine", "travers",
+            // Produits transformés
+            "boulette", "haché", "farce", "brochette", "nugget", "cordon bleu",
+            // Poissons
+            "poisson", "saumon", "thon", "cabillaud", "merlu", "sole", "truite",
+            "bar", "dorade", "anchois", "sardine", "maquereau", "hareng",
+            "lotte", "haddock", "pavé", "surimi", "saint-pierre",
+            // Fruits de mer
+            "crevette", "gambas", "homard", "langouste", "crabe", "moule",
+            "huître", "coquille", "saint-jacques", "calmar", "seiche", "poulpe",
+            // Abats et charcuterie
+            "foie", "rognon", "ris", "langue", "cervelle", "andouillette",
+            "boudin", "andouille", "pâté", "terrine", "rillette"
+        ]
+
         // Vérifier si c'est végétarien
         let hasAnimalProducts = ingredientNames.contains { name in
-            name.contains("viande") || name.contains("poulet") || 
-            name.contains("boeuf") || name.contains("porc") ||
-            name.contains("poisson") || name.contains("saumon")
+            meatKeywords.contains { keyword in
+                name.contains(keyword)
+            }
         }
-        
+
         if !hasAnimalProducts {
             tags.append("Végétarien")
-            
+
+            // Liste étendue de produits laitiers et œufs
+            let dairyKeywords = [
+                // Produits laitiers de base
+                "lait", "fromage", "beurre", "crème", "yaourt", "yogourt",
+                // Fromages à pâte dure
+                "parmesan", "gruyère", "emmental", "comté", "pecorino",
+                "mimolette", "beaufort", "abondance", "tomme",
+                // Fromages à pâte molle
+                "camembert", "brie", "reblochon", "morbier",
+                // Fromages de chèvre et brebis
+                "chèvre", "cottin", "bûche", "crottin", "picodon", "sainte-maure", "feta",
+                // Fromages italiens
+                "mozzarella", "ricotta", "mascarpone", "gorgonzola",
+                // Fromages à raclette/fondue
+                "raclette", "vacherin",
+                // Fromages persillés
+                "roquefort", "bleu",
+                // Fromages à tartiner
+                "kiri", "boursin", "philadelphia", "caprice",
+                // Fromages divers
+                "cheddar", "gouda", "edam",
+                // Œufs
+                "oeuf", "œuf", "jaune", "blanc d'oeuf"
+            ]
+
             // Vérifier si c'est vegan
             let hasDairyOrEggs = ingredientNames.contains { name in
-                name.contains("lait") || name.contains("fromage") ||
-                name.contains("beurre") || name.contains("oeuf") ||
-                name.contains("crème")
+                dairyKeywords.contains { keyword in
+                    name.contains(keyword)
+                }
             }
-            
+
             if !hasDairyOrEggs {
                 tags.append("Vegan")
             }
         }
-        
+
         // Vérifier sans gluten
+        let glutenKeywords = ["farine", "pain", "pâtes", "blé", "orge", "seigle"]
         let hasGluten = ingredientNames.contains { name in
-            name.contains("farine") || name.contains("pain") ||
-            name.contains("pâtes")
+            glutenKeywords.contains { keyword in
+                name.contains(keyword)
+            }
         }
-        
+
         if !hasGluten {
             tags.append("Sans gluten")
         }
-        
+
         return tags
     }
     
@@ -385,23 +440,44 @@ class PostgreSQLService {
 
         var allergens: [String] = []
         let ingredientNames = ingredients.map { $0.lowercased() }
-        
-        if ingredientNames.contains(where: { $0.contains("gluten") || $0.contains("farine") || $0.contains("blé") }) {
+
+        // Gluten (céréales)
+        let glutenKeywords = ["gluten", "farine", "blé", "pain", "pâtes", "orge", "seigle"]
+        if ingredientNames.contains(where: { name in
+            glutenKeywords.contains { keyword in name.contains(keyword) }
+        }) {
             allergens.append("Gluten")
         }
-        
-        if ingredientNames.contains(where: { $0.contains("lait") || $0.contains("lactose") || $0.contains("fromage") }) {
+
+        // Lactose (produits laitiers)
+        let lactoseKeywords = [
+            "lait", "lactose", "fromage", "beurre", "crème", "yaourt", "yogourt",
+            "parmesan", "gruyère", "emmental", "comté", "roquefort", "camembert",
+            "brie", "chèvre", "mozzarella", "ricotta", "mascarpone", "cheddar",
+            "feta", "reblochon", "raclette", "morbier"
+        ]
+        if ingredientNames.contains(where: { name in
+            lactoseKeywords.contains { keyword in name.contains(keyword) }
+        }) {
             allergens.append("Lactose")
         }
-        
-        if ingredientNames.contains(where: { $0.contains("oeuf") }) {
+
+        // Œufs
+        if ingredientNames.contains(where: { $0.contains("oeuf") || $0.contains("œuf") }) {
             allergens.append("Œufs")
         }
-        
-        if ingredientNames.contains(where: { $0.contains("noix") || $0.contains("noisette") || $0.contains("amande") }) {
+
+        // Fruits à coque
+        let nutsKeywords = [
+            "noix", "noisette", "amande", "pistache", "cajou", "cacahuète",
+            "arachide", "pécan", "macadamia", "pignon"
+        ]
+        if ingredientNames.contains(where: { name in
+            nutsKeywords.contains { keyword in name.contains(keyword) }
+        }) {
             allergens.append("Fruits à coque")
         }
-        
+
         return allergens
     }
 }

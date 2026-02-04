@@ -71,7 +71,7 @@ struct HomeView: View {
             )
 
             RecipeCarousel(
-                recipes: dataManager.recipes,
+                recipes: dataManager.getRecommendedRecipes(),
                 profileManager: profileManager,
                 dataManager: dataManager
             )
