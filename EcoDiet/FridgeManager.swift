@@ -31,13 +31,12 @@ class FridgeManager {
         }
     }
 
+    @MainActor
     func loadIngredients() {
         // Déléguer au repository
         Task {
             await ingredientRepo.loadAllIngredients()
-            await MainActor.run {
-                refreshCache()
-            }
+            refreshCache()
         }
     }
 
@@ -48,6 +47,7 @@ class FridgeManager {
         needsCacheRefresh = false
     }
 
+    @MainActor
     func addIngredient(_ ingredient: Ingredient) {
         // Déléguer au repository
         do {

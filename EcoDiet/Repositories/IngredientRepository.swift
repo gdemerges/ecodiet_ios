@@ -32,12 +32,14 @@ class IngredientRepository: IngredientRepositoryProtocol {
     // MARK: - Public Methods
 
     /// Charge tous les ingrédients
+    @MainActor
     func loadAllIngredients() async {
         let descriptor = FetchDescriptor<Ingredient>(
             sortBy: [SortDescriptor(\.name)]
         )
         do {
-            ingredients = try modelContext.fetch(descriptor)
+            let fetchedIngredients = try modelContext.fetch(descriptor)
+            ingredients = fetchedIngredients
         } catch {
             Logger.dataError("Erreur lors du chargement des ingrédients", error: error)
         }
@@ -57,10 +59,15 @@ class IngredientRepository: IngredientRepositoryProtocol {
     }
 
     /// Ajoute un ingrédient
+    @MainActor
     func addIngredient(_ ingredient: Ingredient) throws {
         modelContext.insert(ingredient)
         try modelContext.save()
-        ingredients.append(ingredient)
+
+        // Forcer une mise à jour de la liste pour notifier SwiftUI
+        var updatedIngredients = ingredients
+        updatedIngredients.append(ingredient)
+        ingredients = updatedIngredients
     }
 
     /// Supprime un ingrédient
