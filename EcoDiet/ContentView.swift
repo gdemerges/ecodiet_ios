@@ -83,9 +83,10 @@ struct ContentView: View {
         .task {
             setupDataManager()
 
-            // Charger les recettes PostgreSQL au démarrage
+            // Charger les recettes PostgreSQL au démarrage avec rechargement forcé
+            // Cela permet de mettre à jour les tags diététiques et eco-scores
             if let dataManager = dataManager {
-                await dataManager.loadPostgreSQLRecipes()
+                await dataManager.loadPostgreSQLRecipes(forceReload: true)
             }
         }
     }

@@ -185,7 +185,17 @@ class SwiftDataManager {
     }
     
     /// Charge les recettes depuis PostgreSQL
-    func loadPostgreSQLRecipes() async {
+    func loadPostgreSQLRecipes(forceReload: Bool = false) async {
+        // Si forceReload, supprimer les recettes existantes
+        if forceReload && !recipes.isEmpty {
+            print("[Data] 🔄 Force reload: suppression des \(recipes.count) recettes existantes")
+            for recipe in recipes {
+                modelContext.delete(recipe)
+            }
+            recipes = []
+            try? modelContext.save()
+        }
+
         // Ne charger que si la base est vide pour éviter les doublons
         guard recipes.isEmpty else {
             print("[Data] Recettes déjà chargées (\(recipes.count) recettes)")
@@ -665,41 +675,56 @@ class SwiftDataManager {
         }
 
         let preferences = profile.dietaryPreferences
-
-        // Si l'utilisateur n'a pas de préférences, retourner toutes les recettes
-        if preferences.isEmpty {
-            return recipes
-        }
+        let allergies = Set(profile.allergies)
 
         // Convertir en Set pour des recherches O(1)
         let preferencesSet = Set(preferences)
 
         // Pré-calculer les cas spéciaux une seule fois
         let isOmnivore = preferencesSet.contains("Omnivore")
-        let acceptsVegetarian = preferencesSet.contains("Vegan") ||
-                                preferencesSet.contains("Végétarien") ||
-                                preferencesSet.contains("Flexitarien")
+        let isVegetarian = preferencesSet.contains("Végétarien")
+        let isVegan = preferencesSet.contains("Vegan")
+        let isFlexitarian = preferencesSet.contains("Flexitarien")
 
-        // Si omnivore, retourner toutes les recettes
-        if isOmnivore {
-            return recipes
-        }
-
-        // Filtrer les recettes avec des opérations Set O(1)
+        // Filtrer les recettes
         return recipes.filter { recipe in
+            // 1. FILTRER LES ALLERGÈNES (priorité absolue)
+            let recipeAllergens = Set(recipe.allergens)
+            if !allergies.isDisjoint(with: recipeAllergens) {
+                return false // Contient un allergène, on exclut
+            }
+
+            // 2. Si pas de préférences, retourner toutes les recettes (sans allergènes)
+            if preferences.isEmpty {
+                return true
+            }
+
+            // 3. Si omnivore, accepter toutes les recettes
+            if isOmnivore {
+                return true
+            }
+
             let recipeTags = Set(recipe.dietaryTags)
 
-            // Vérifier l'intersection directe (O(min(n,m)))
-            if !preferencesSet.isDisjoint(with: recipeTags) {
-                return true
+            // 4. Si VEGAN : accepter uniquement les recettes Vegan
+            if isVegan {
+                return recipeTags.contains("Vegan")
             }
 
-            // Cas spécial: accepte les recettes végétariennes
-            if acceptsVegetarian && recipeTags.contains("Végétarien") {
-                return true
+            // 5. Si VÉGÉTARIEN : accepter Végétarien ET Vegan
+            if isVegetarian {
+                return recipeTags.contains("Végétarien") || recipeTags.contains("Vegan")
             }
 
-            return false
+            // 6. Si FLEXITARIEN : accepter Végétarien, Vegan, et recettes sans tag (tout)
+            if isFlexitarian {
+                return recipeTags.contains("Végétarien") ||
+                       recipeTags.contains("Vegan") ||
+                       recipeTags.isEmpty
+            }
+
+            // 7. Autres préférences : vérifier l'intersection
+            return !preferencesSet.isDisjoint(with: recipeTags)
         }
     }
     
