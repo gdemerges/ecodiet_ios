@@ -1,0 +1,26 @@
+# Dépendances
+node_modules/
+
+# Artefacts Xcode
+*.xcuserstate
+*.xcbkptlist
+EcoDiet.xcodeproj/project.xcworkspace/
+EcoDiet.xcodeproj/xcuserdata/
+DerivedData/
+
+# Assets binaires
+EcoDiet/Assets.xcassets/
+
+# Fichiers temporaires / backups
+*.backup
+*.swp
+
+# Données de test volumineuses
+EcoDiet/test_data.sql
+
+# Scripts d'environnement
+EcoDiet/check_env.sh
+EcoDiet/make_executable.sh
+EcoDiet/setup.sh
+EcoDiet/CHEATSHEET.sh
+EcoDiet/test_api.sh

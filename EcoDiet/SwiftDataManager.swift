@@ -167,9 +167,9 @@ class SwiftDataManager {
             email: "guillaume@email.com"
         )
         
-        // Données d'exemple
-        profile.dietaryPreferences = ["Végétarien", "Bio", "Local"]
-        profile.allergies = ["Fruits à coque"]
+        // Données d'exemple - Profil omnivore par défaut pour voir toutes les recettes
+        profile.dietaryPreferences = ["Omnivore"]
+        profile.allergies = []
         profile.cookingLevel = .intermediate
         
         modelContext.insert(profile)
@@ -686,6 +686,9 @@ class SwiftDataManager {
         let isVegan = preferencesSet.contains("Vegan")
         let isFlexitarian = preferencesSet.contains("Flexitarien")
 
+        // Vérifier si l'utilisateur a une préférence alimentaire spécifique
+        let hasDietaryPreference = isOmnivore || isVegetarian || isVegan || isFlexitarian
+
         // Filtrer les recettes
         return recipes.filter { recipe in
             // 1. FILTRER LES ALLERGÈNES (priorité absolue)
@@ -694,8 +697,8 @@ class SwiftDataManager {
                 return false // Contient un allergène, on exclut
             }
 
-            // 2. Si pas de préférences, retourner toutes les recettes (sans allergènes)
-            if preferences.isEmpty {
+            // 2. Si pas de préférence alimentaire spécifique, retourner toutes les recettes
+            if !hasDietaryPreference {
                 return true
             }
 
@@ -723,8 +726,8 @@ class SwiftDataManager {
                        recipeTags.isEmpty
             }
 
-            // 7. Autres préférences : vérifier l'intersection
-            return !preferencesSet.isDisjoint(with: recipeTags)
+            // 7. Cas improbable (ne devrait jamais arriver)
+            return true
         }
     }
     
