@@ -53,26 +53,31 @@ class ExpirationNotificationService {
             guard granted else { return }
         }
 
-        // Annuler les anciennes notifications
-        await cancelAllExpirationNotifications()
+        let pending = await notificationCenter.pendingNotificationRequests()
+        let pendingIDs = Set(pending.filter { $0.content.categoryIdentifier == notificationCategoryID }.map { $0.identifier })
 
-        // Planifier les nouvelles
+        // Calcule les identifiants voulus
+        var desiredIDs = Set<String>()
+        for ingredient in ingredients where ingredient.isInFridge {
+            guard ingredient.expirationDate != nil else { continue }
+            desiredIDs.insert("\(ingredient.id.uuidString)_0")
+            desiredIDs.insert("\(ingredient.id.uuidString)_1")
+        }
+
+        // Supprime uniquement les notifications obsolètes
+        let toRemove = pendingIDs.subtracting(desiredIDs)
+        if !toRemove.isEmpty {
+            notificationCenter.removePendingNotificationRequests(withIdentifiers: Array(toRemove))
+        }
+
+        // Planifie uniquement les nouvelles
         for ingredient in ingredients where ingredient.isInFridge {
             guard let expirationDate = ingredient.expirationDate else { continue }
-
-            // Notification 1 jour avant expiration
-            await scheduleNotification(
-                for: ingredient,
-                daysBefore: 1,
-                expirationDate: expirationDate
-            )
-
-            // Notification le jour de l'expiration
-            await scheduleNotification(
-                for: ingredient,
-                daysBefore: 0,
-                expirationDate: expirationDate
-            )
+            for daysBefore in [1, 0] {
+                let id = "\(ingredient.id.uuidString)_\(daysBefore)"
+                guard !pendingIDs.contains(id) else { continue }
+                await scheduleNotification(for: ingredient, daysBefore: daysBefore, expirationDate: expirationDate)
+            }
         }
     }
 

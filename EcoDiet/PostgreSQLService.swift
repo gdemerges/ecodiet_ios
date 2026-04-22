@@ -48,9 +48,18 @@ class PostgreSQLService {
     // URL de votre API backend (vous devrez créer cette API)
     private let baseURL = "http://localhost:3002/api"
 
-    // Configuration du retry pour les erreurs réseau transitoires
     private let maxRetries = 3
-    private let initialRetryDelay: UInt64 = 500_000_000 // 0.5 seconde en nanosecondes
+    private let initialRetryDelay: UInt64 = 500_000_000
+
+    private let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.requestCachePolicy = .returnCacheDataElseLoad
+        config.urlCache = URLCache(
+            memoryCapacity: 10 * 1024 * 1024,
+            diskCapacity: 50 * 1024 * 1024
+        )
+        return URLSession(configuration: config)
+    }()
 
     // Configuration du décodeur JSON
     private let decoder: JSONDecoder = {
@@ -139,7 +148,7 @@ class PostgreSQLService {
                 throw PostgreSQLError.invalidURL
             }
 
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await session.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
@@ -157,7 +166,7 @@ class PostgreSQLService {
                 throw PostgreSQLError.invalidURL
             }
 
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await session.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
@@ -178,7 +187,7 @@ class PostgreSQLService {
                 throw PostgreSQLError.invalidURL
             }
 
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await session.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {

@@ -89,7 +89,8 @@ class SwiftDataManager {
     }
     
     private func loadRecipes() {
-        let descriptor = FetchDescriptor<Recipe>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
+        var descriptor = FetchDescriptor<Recipe>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
+        descriptor.fetchLimit = 100
         do {
             recipes = try modelContext.fetch(descriptor)
         } catch {

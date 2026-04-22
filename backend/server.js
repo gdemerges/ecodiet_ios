@@ -79,15 +79,15 @@ app.get('/api/recettes/:id', async (req, res) => {
 app.get('/api/recettes/search', async (req, res) => {
   try {
     const { q, limit = 20 } = req.query;
-    
+
     if (!q) {
       return res.status(400).json({ error: 'Paramètre de recherche manquant' });
     }
-    
+
     const result = await pool.query(
-      `SELECT * FROM marmiton_recettes
+      `SELECT id, url, titre, photo, duree, created_at
+       FROM marmiton_recettes
        WHERE titre ILIKE $1
-       OR ingredients::text ILIKE $1
        ORDER BY created_at DESC
        LIMIT $2`,
       [`%${q}%`, limit]
@@ -105,10 +105,14 @@ app.get('/api/recettes/search', async (req, res) => {
 app.get('/api/recettes/random', async (req, res) => {
   try {
     const { count = 10 } = req.query;
-    
+    const n = Math.min(parseInt(count) || 10, 50);
+
     const result = await pool.query(
-      'SELECT * FROM marmiton_recettes ORDER BY RANDOM() LIMIT $1',
-      [count]
+      `SELECT id, url, titre, photo, duree, created_at
+       FROM marmiton_recettes
+       OFFSET floor(random() * (SELECT GREATEST(count(*) - $1, 0) FROM marmiton_recettes))::int
+       LIMIT $1`,
+      [n]
     );
 
     res.set('Cache-Control', 'public, max-age=600');
