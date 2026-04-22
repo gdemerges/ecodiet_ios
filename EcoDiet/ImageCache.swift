@@ -107,11 +107,21 @@ actor ImageCacheService {
                 return nil
             }
 
-            return image
+            return downsample(image, to: 800)
         } catch {
             Logger.networkError("Erreur téléchargement image", error: error)
             return nil
         }
+    }
+
+    private func downsample(_ image: UIImage, to maxDimension: CGFloat) -> UIImage {
+        let size = image.size
+        let longestSide = max(size.width, size.height)
+        guard longestSide > maxDimension else { return image }
+        let scale = maxDimension / longestSide
+        let newSize = CGSize(width: (size.width * scale).rounded(), height: (size.height * scale).rounded())
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
     }
 }
 

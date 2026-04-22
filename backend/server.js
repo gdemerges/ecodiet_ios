@@ -37,12 +37,13 @@ pool.on('error', (err) => {
 app.get('/api/recettes', async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
-    
+
     const result = await pool.query(
       'SELECT * FROM marmiton_recettes ORDER BY created_at DESC LIMIT $1 OFFSET $2',
       [limit, offset]
     );
-    
+
+    res.set('Cache-Control', 'public, max-age=3600');
     res.json(result.rows);
   } catch (error) {
     console.error('Erreur lors de la récupération des recettes:', error);
@@ -54,16 +55,17 @@ app.get('/api/recettes', async (req, res) => {
 app.get('/api/recettes/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await pool.query(
       'SELECT * FROM marmiton_recettes WHERE id = $1',
       [id]
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Recette non trouvée' });
     }
-    
+
+    res.set('Cache-Control', 'public, max-age=3600');
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Erreur lors de la récupération de la recette:', error);
@@ -81,14 +83,15 @@ app.get('/api/recettes/search', async (req, res) => {
     }
     
     const result = await pool.query(
-      `SELECT * FROM marmiton_recettes 
-       WHERE titre ILIKE $1 
+      `SELECT * FROM marmiton_recettes
+       WHERE titre ILIKE $1
        OR ingredients::text ILIKE $1
        ORDER BY created_at DESC
        LIMIT $2`,
       [`%${q}%`, limit]
     );
-    
+
+    res.set('Cache-Control', 'public, max-age=600');
     res.json(result.rows);
   } catch (error) {
     console.error('Erreur lors de la recherche:', error);
@@ -105,7 +108,8 @@ app.get('/api/recettes/random', async (req, res) => {
       'SELECT * FROM marmiton_recettes ORDER BY RANDOM() LIMIT $1',
       [count]
     );
-    
+
+    res.set('Cache-Control', 'public, max-age=600');
     res.json(result.rows);
   } catch (error) {
     console.error('Erreur lors de la récupération des recettes aléatoires:', error);

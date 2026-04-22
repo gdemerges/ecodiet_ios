@@ -394,6 +394,10 @@ struct QuizCard: View {
                 pulseAnimation = true
             }
         }
+        .onDisappear {
+            isAnimating = false
+            pulseAnimation = false
+        }
     }
 }
 
@@ -522,6 +526,10 @@ struct SportsQuizCard: View {
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
                 pulseAnimation = true
             }
+        }
+        .onDisappear {
+            isAnimating = false
+            pulseAnimation = false
         }
     }
 }
