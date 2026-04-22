@@ -4,6 +4,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const compression = require('compression');
 require('dotenv').config();
 
 const app = express();
@@ -19,6 +20,7 @@ const pool = new Pool({
 });
 
 // Middleware
+app.use(compression());
 app.use(cors());
 app.use(express.json());
 

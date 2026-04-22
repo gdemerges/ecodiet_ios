@@ -11,16 +11,26 @@ actor ImageCacheService {
     private let cacheDirectory: URL
 
     private init() {
-        // Configurer le cache mémoire
         memoryCache.countLimit = 100
         memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
 
-        // Créer le répertoire de cache sur disque avec fallback sécurisé
         let cachePath = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? fileManager.temporaryDirectory
         cacheDirectory = cachePath.appendingPathComponent("ImageCache", isDirectory: true)
 
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+        evictStaleFiles()
+    }
+
+    private func evictStaleFiles(olderThan days: Int = 7) {
+        guard let files = try? fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: [.contentModificationDateKey]) else { return }
+        let cutoff = Date().addingTimeInterval(-Double(days) * 86400)
+        for file in files {
+            let modified = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+            if modified < cutoff {
+                try? fileManager.removeItem(at: file)
+            }
+        }
     }
 
     // MARK: - Public API
