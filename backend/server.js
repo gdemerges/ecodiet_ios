@@ -38,11 +38,12 @@ pool.on('error', (err) => {
 // GET /api/recettes - Récupérer toutes les recettes
 app.get('/api/recettes', async (req, res) => {
   try {
-    const { limit = 50, offset = 0 } = req.query;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 200);
+    const offset = Math.max(parseInt(req.query.offset) || 0, 0);
 
     const result = await pool.query(
       'SELECT * FROM marmiton_recettes ORDER BY created_at DESC LIMIT $1 OFFSET $2',
-      [limit, offset]
+      [limit, offset]  // already validated integers above
     );
 
     res.set('Cache-Control', 'public, max-age=3600');
@@ -56,7 +57,8 @@ app.get('/api/recettes', async (req, res) => {
 // GET /api/recettes/search - Rechercher des recettes
 app.get('/api/recettes/search', async (req, res) => {
   try {
-    const { q, limit = 20 } = req.query;
+    const { q } = req.query;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
 
     if (!q) {
       return res.status(400).json({ error: 'Paramètre de recherche manquant' });

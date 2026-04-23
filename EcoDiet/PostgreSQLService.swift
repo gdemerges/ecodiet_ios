@@ -322,43 +322,60 @@ class PostgreSQLService {
     }
     
     private func estimateCarbonFootprint(ingredients: [RecipeIngredient]) -> Double {
-        // Empreinte carbone estimée basée sur les ingrédients
+        // Empreinte carbone estimée par portion standard (~100g) par ingrédient.
+        // La quantité brute n'est pas utilisée car les unités sont hétérogènes (g, kg, pièces…).
         var totalFootprint = 0.0
 
         for ingredient in ingredients {
             let name = ingredient.name.lowercased()
-            let quantity = max(ingredient.quantity, 1.0) // Au moins 1 si 0
 
-            // Estimations approximatives en g CO2eq par ingrédient/portion
             if name.contains("boeuf") || name.contains("veau") {
-                totalFootprint += 2700 * quantity * 0.1 // Facteur 0.1 pour portion standard
+                totalFootprint += 270
             } else if name.contains("poulet") || name.contains("volaille") || name.contains("canard") {
-                totalFootprint += 690 * quantity * 0.1
+                totalFootprint += 69
             } else if name.contains("poisson") || name.contains("saumon") || name.contains("thon") {
-                totalFootprint += 500 * quantity * 0.1
+                totalFootprint += 50
             } else if name.contains("porc") || name.contains("jambon") || name.contains("lard") || name.contains("cochon") {
-                totalFootprint += 1200 * quantity * 0.1
+                totalFootprint += 120
             } else if name.contains("fromage") || name.contains("parmesan") || name.contains("cheddar") {
-                totalFootprint += 1150 * quantity * 0.1
+                totalFootprint += 115
             } else if name.contains("lait") || name.contains("crème") || name.contains("beurre") {
-                totalFootprint += 300 * quantity * 0.1
+                totalFootprint += 30
             } else if name.contains("oeuf") {
-                totalFootprint += 450 * quantity * 0.5
+                totalFootprint += 45
             } else if name.contains("légume") || name.contains("salade") || name.contains("tomate") ||
                       name.contains("carotte") || name.contains("oignon") || name.contains("ail") {
-                totalFootprint += 50 * quantity * 0.1
+                totalFootprint += 5
             } else if name.contains("fruit") {
-                totalFootprint += 60 * quantity * 0.1
+                totalFootprint += 6
             } else if name.contains("riz") || name.contains("pâtes") || name.contains("pain") {
-                totalFootprint += 150 * quantity * 0.1
+                totalFootprint += 15
             } else {
-                totalFootprint += 100 // Valeur par défaut par ingrédient
+                totalFootprint += 10
             }
         }
 
-        return max(200, totalFootprint) // Minimum 200g CO2eq
+        return max(200, totalFootprint)
     }
     
+    // MARK: - Shared keyword lists
+
+    private static let glutenKeywords = ["farine", "pain", "pâtes", "blé", "orge", "seigle", "gluten"]
+
+    private static let dairyKeywords = [
+        "lait", "fromage", "beurre", "crème", "yaourt", "yogourt",
+        "parmesan", "gruyère", "emmental", "comté", "pecorino",
+        "mimolette", "beaufort", "abondance", "tomme",
+        "camembert", "brie", "reblochon", "morbier",
+        "chèvre", "cottin", "bûche", "crottin", "picodon", "sainte-maure", "feta",
+        "mozzarella", "ricotta", "mascarpone", "gorgonzola",
+        "raclette", "vacherin",
+        "roquefort", "bleu",
+        "kiri", "boursin", "philadelphia", "caprice",
+        "cheddar", "gouda", "edam",
+        "oeuf", "œuf", "jaune", "blanc d'oeuf"
+    ]
+
     private func detectDietaryTags(ingredients: [String]?) -> [String] {
         guard let ingredients = ingredients else { return [] }
 
@@ -403,36 +420,9 @@ class PostgreSQLService {
         if !hasAnimalProducts {
             tags.append("Végétarien")
 
-            // Liste étendue de produits laitiers et œufs
-            let dairyKeywords = [
-                // Produits laitiers de base
-                "lait", "fromage", "beurre", "crème", "yaourt", "yogourt",
-                // Fromages à pâte dure
-                "parmesan", "gruyère", "emmental", "comté", "pecorino",
-                "mimolette", "beaufort", "abondance", "tomme",
-                // Fromages à pâte molle
-                "camembert", "brie", "reblochon", "morbier",
-                // Fromages de chèvre et brebis
-                "chèvre", "cottin", "bûche", "crottin", "picodon", "sainte-maure", "feta",
-                // Fromages italiens
-                "mozzarella", "ricotta", "mascarpone", "gorgonzola",
-                // Fromages à raclette/fondue
-                "raclette", "vacherin",
-                // Fromages persillés
-                "roquefort", "bleu",
-                // Fromages à tartiner
-                "kiri", "boursin", "philadelphia", "caprice",
-                // Fromages divers
-                "cheddar", "gouda", "edam",
-                // Œufs
-                "oeuf", "œuf", "jaune", "blanc d'oeuf"
-            ]
-
             // Vérifier si c'est vegan
             let hasDairyOrEggs = ingredientNames.contains { name in
-                dairyKeywords.contains { keyword in
-                    name.contains(keyword)
-                }
+                Self.dairyKeywords.contains { keyword in name.contains(keyword) }
             }
 
             if !hasDairyOrEggs {
@@ -441,11 +431,8 @@ class PostgreSQLService {
         }
 
         // Vérifier sans gluten
-        let glutenKeywords = ["farine", "pain", "pâtes", "blé", "orge", "seigle"]
         let hasGluten = ingredientNames.contains { name in
-            glutenKeywords.contains { keyword in
-                name.contains(keyword)
-            }
+            Self.glutenKeywords.contains { keyword in name.contains(keyword) }
         }
 
         if !hasGluten {
@@ -462,22 +449,15 @@ class PostgreSQLService {
         let ingredientNames = ingredients.map { $0.lowercased() }
 
         // Gluten (céréales)
-        let glutenKeywords = ["gluten", "farine", "blé", "pain", "pâtes", "orge", "seigle"]
         if ingredientNames.contains(where: { name in
-            glutenKeywords.contains { keyword in name.contains(keyword) }
+            Self.glutenKeywords.contains { keyword in name.contains(keyword) }
         }) {
             allergens.append("Gluten")
         }
 
         // Lactose (produits laitiers)
-        let lactoseKeywords = [
-            "lait", "lactose", "fromage", "beurre", "crème", "yaourt", "yogourt",
-            "parmesan", "gruyère", "emmental", "comté", "roquefort", "camembert",
-            "brie", "chèvre", "mozzarella", "ricotta", "mascarpone", "cheddar",
-            "feta", "reblochon", "raclette", "morbier"
-        ]
         if ingredientNames.contains(where: { name in
-            lactoseKeywords.contains { keyword in name.contains(keyword) }
+            Self.dairyKeywords.contains { keyword in name.contains(keyword) }
         }) {
             allergens.append("Lactose")
         }

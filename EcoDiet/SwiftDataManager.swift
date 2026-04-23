@@ -112,8 +112,10 @@ class SwiftDataManager {
     }
     
     private func migrateFolderColors() {
+        guard folders.contains(where: { $0.colorHex.isEmpty || $0.colorHex == "#000000" }) else { return }
+
         var needsSave = false
-        
+
         for folder in folders {
             // Si le dossier n'a pas de couleur (ancien format), lui en assigner une
             if folder.colorHex.isEmpty || folder.colorHex == "#000000" {

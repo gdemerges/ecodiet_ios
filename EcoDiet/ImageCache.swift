@@ -144,7 +144,6 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let placeholder: () -> Placeholder
 
     @State private var image: UIImage?
-    @State private var isLoading = true
 
     init(
         url: URL?,
@@ -170,14 +169,8 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     }
 
     private func loadImage() async {
-        guard let url = url else {
-            isLoading = false
-            return
-        }
-
-        isLoading = true
+        guard let url = url else { return }
         image = await ImageCacheService.shared.image(for: url)
-        isLoading = false
     }
 }
 
