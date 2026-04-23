@@ -46,7 +46,7 @@ struct MarmitonIngredient: Codable {
 @Observable
 class PostgreSQLService {
     // URL de votre API backend (vous devrez créer cette API)
-    private let baseURL = "http://localhost:3002/api"
+    private let baseURL = "http://localhost:3000/api"
 
     private let maxRetries = 3
     private let initialRetryDelay: UInt64 = 500_000_000
@@ -69,18 +69,21 @@ class PostgreSQLService {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
+        let formatterNoMs: ISO8601DateFormatter = {
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime]
+            return f
+        }()
+
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
 
-            // Essayer d'abord avec les millisecondes
             if let date = formatter.date(from: dateString) {
                 return date
             }
 
-            // Fallback sans millisecondes
-            formatter.formatOptions = [.withInternetDateTime]
-            if let date = formatter.date(from: dateString) {
+            if let date = formatterNoMs.date(from: dateString) {
                 return date
             }
 
@@ -140,7 +143,7 @@ class PostgreSQLService {
         return try await executeWithRetry {
             var components = URLComponents(string: "\(self.baseURL)/recettes")
             components?.queryItems = [
-                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "offset", value: String((page - 1) * limit)),
                 URLQueryItem(name: "limit", value: String(limit))
             ]
 
@@ -148,7 +151,7 @@ class PostgreSQLService {
                 throw PostgreSQLError.invalidURL
             }
 
-            let (data, response) = try await session.data(from: url)
+            let (data, response) = try await self.session.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
@@ -166,7 +169,7 @@ class PostgreSQLService {
                 throw PostgreSQLError.invalidURL
             }
 
-            let (data, response) = try await session.data(from: url)
+            let (data, response) = try await self.session.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
@@ -187,7 +190,7 @@ class PostgreSQLService {
                 throw PostgreSQLError.invalidURL
             }
 
-            let (data, response) = try await session.data(from: url)
+            let (data, response) = try await self.session.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
@@ -275,8 +278,16 @@ class PostgreSQLService {
             unite = nil
         }
 
+        // Extraire le nom en retirant le préfixe "quantité unité de/d'"
+        var nom = ingredientString
+        let prefixPattern = #"^\d[\d\s/,.]*(?:kg|g|ml|cl|l|cuillères?|c\.|pièces?|tranches?|sachets?)?\s*(?:de |d')?"#
+        if let range = nom.range(of: prefixPattern, options: [.regularExpression, .caseInsensitive]) {
+            nom = String(nom[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+        }
+        if nom.isEmpty { nom = ingredientString }
+
         return MarmitonIngredient(
-            nom: ingredientString,
+            nom: nom,
             quantite: quantityString,
             unite: unite
         )
@@ -512,3 +523,4 @@ enum PostgreSQLError: LocalizedError {
         }
     }
 }
+

@@ -164,8 +164,8 @@ class SwiftDataManager {
     // MARK: - Création des données par défaut
     private func createDefaultUserProfile() {
         let profile = UserProfile(
-            name: "Guillaume",
-            email: "guillaume@email.com"
+            name: "",
+            email: ""
         )
         
         // Données d'exemple - Profil omnivore par défaut pour voir toutes les recettes
@@ -186,6 +186,7 @@ class SwiftDataManager {
     }
     
     /// Charge les recettes depuis PostgreSQL
+    @MainActor
     func loadPostgreSQLRecipes(forceReload: Bool = false) async {
         // Si forceReload, supprimer les recettes existantes
         if forceReload && !recipes.isEmpty {
@@ -686,9 +687,10 @@ class SwiftDataManager {
         let isVegetarian = preferencesSet.contains("Végétarien")
         let isVegan = preferencesSet.contains("Vegan")
         let isFlexitarian = preferencesSet.contains("Flexitarien")
+        let isPescatarian = preferencesSet.contains("Pescetarien")
 
         // Vérifier si l'utilisateur a une préférence alimentaire spécifique
-        let hasDietaryPreference = isOmnivore || isVegetarian || isVegan || isFlexitarian
+        let hasDietaryPreference = isOmnivore || isVegetarian || isVegan || isFlexitarian || isPescatarian
 
         // Filtrer les recettes
         return recipes.filter { recipe in
@@ -727,7 +729,16 @@ class SwiftDataManager {
                        recipeTags.isEmpty
             }
 
-            // 7. Cas improbable (ne devrait jamais arriver)
+            // 7. Si PESCETARIEN : accepter poisson, végétarien et vegan ; exclure viandes terrestres
+            if isPescatarian {
+                if recipeTags.contains("Végétarien") || recipeTags.contains("Vegan") || recipeTags.contains("Pescetarien") {
+                    return true
+                }
+                let meatTags: Set<String> = ["Viande", "Bœuf", "Porc", "Volaille"]
+                return recipeTags.isDisjoint(with: meatTags)
+            }
+
+            // 8. Cas improbable (ne devrait jamais arriver)
             return true
         }
     }

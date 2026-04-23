@@ -61,6 +61,7 @@ class FridgeManager {
         }
     }
 
+    @MainActor
     func removeIngredient(_ ingredient: Ingredient) {
         // Déléguer au repository
         do {
@@ -72,6 +73,7 @@ class FridgeManager {
         }
     }
 
+    @MainActor
     func updateIngredient(_ ingredient: Ingredient) {
         // Déléguer au repository
         do {
@@ -87,6 +89,7 @@ class FridgeManager {
         }
     }
 
+    @MainActor
     func toggleFridgeStatus(_ ingredient: Ingredient) {
         ingredient.isInFridge.toggle()
 
@@ -147,7 +150,7 @@ class FridgeManager {
             Ingredient(name: "Carottes", category: .vegetable, unit: .piece, imageName: "carrot.fill"),
             Ingredient(name: "Oignon", category: .vegetable, unit: .piece, imageName: "circle.fill"),
             Ingredient(name: "Ail", category: .vegetable, unit: .piece, imageName: "circle.fill"),
-            Ingredient(name: "Epinards", category: .vegetable, unit: .gram, imageName: "leaf.fill"),
+            Ingredient(name: "Épinards", category: .vegetable, unit: .gram, imageName: "leaf.fill"),
             Ingredient(name: "Potiron", category: .vegetable, unit: .kilogram, imageName: "circle.fill"),
             Ingredient(name: "Laitue romaine", category: .vegetable, unit: .piece, imageName: "leaf.fill"),
 
@@ -159,7 +162,7 @@ class FridgeManager {
             // Proteines
             Ingredient(name: "Poulet", category: .protein, unit: .gram, imageName: "fish.fill"),
             Ingredient(name: "Pois chiches", category: .protein, unit: .gram, imageName: "circle.fill"),
-            Ingredient(name: "Oeufs", category: .protein, unit: .piece, imageName: "circle.fill"),
+            Ingredient(name: "Œufs", category: .protein, unit: .piece, imageName: "circle.fill"),
             Ingredient(name: "Anchois", category: .protein, unit: .piece, imageName: "fish.fill"),
 
             // Produits laitiers
@@ -168,8 +171,8 @@ class FridgeManager {
 
             // Cereales
             Ingredient(name: "Quinoa", category: .grain, unit: .gram, imageName: "leaf.fill"),
-            Ingredient(name: "Pates completes", category: .grain, unit: .gram, imageName: "circle.fill"),
-            Ingredient(name: "Croutons", category: .grain, unit: .gram, imageName: "square.fill"),
+            Ingredient(name: "Pâtes complètes", category: .grain, unit: .gram, imageName: "circle.fill"),
+            Ingredient(name: "Croûtons", category: .grain, unit: .gram, imageName: "square.fill"),
 
             // Huiles et condiments
             Ingredient(name: "Huile d'olive", category: .oil, unit: .milliliter, imageName: "drop.fill"),
@@ -183,7 +186,7 @@ class FridgeManager {
 
             // Autres
             Ingredient(name: "Graines de tournesol", category: .other, unit: .gram, imageName: "circle.fill"),
-            Ingredient(name: "Bouillon de legumes", category: .other, unit: .milliliter, imageName: "drop.fill")
+            Ingredient(name: "Bouillon de légumes", category: .other, unit: .milliliter, imageName: "drop.fill")
         ]
     }
 }
